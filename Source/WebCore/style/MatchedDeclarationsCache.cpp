@@ -107,17 +107,22 @@ bool MatchedDeclarationsCache::isCacheable(const Element& element, const RenderS
     return true;
 }
 
-bool MatchedDeclarationsCache::Entry::isUsableAfterHighPriorityProperties(const RenderStyle& style) const
+bool mayOtherPropertiesBeAffectedByHighPriorityStyleChange(const RenderStyle& a, const RenderStyle& b)
 {
-    if (style.usedZoom() != renderStyle->usedZoom())
-        return false;
+    if (a.usedZoom() != b.usedZoom())
+        return true;
 
 #if ENABLE(DARK_MODE_CSS)
-    if (style.colorScheme() != renderStyle->colorScheme())
-        return false;
+    if (a.colorScheme() != b.colorScheme())
+        return true;
 #endif
 
-    return Style::equalForLengthResolution(style, *renderStyle);
+    return !Style::equalForLengthResolution(a, b);
+}
+
+bool MatchedDeclarationsCache::Entry::isUsableAfterHighPriorityProperties(const RenderStyle& style) const
+{
+    return !mayOtherPropertiesBeAffectedByHighPriorityStyleChange(style, *renderStyle);
 }
 
 unsigned MatchedDeclarationsCache::computeHash(const MatchResult& matchResult, const StyleCustomPropertyData& inheritedCustomProperties)

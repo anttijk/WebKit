@@ -248,7 +248,12 @@ private:
 
     std::optional<MediaQueryViewportState> m_viewportStateOnPreviousMediaQueryEvaluation;
     WeakHashMap<Element, LayoutSize, WeakPtrImplWithEventTargetData> m_queryContainerStates;
-    mutable WeakHashMap<const Element, UniqueRef<MatchResult>, WeakPtrImplWithEventTargetData> m_cachedMatchResults;
+
+    struct CachedMatchResult {
+        std::unique_ptr<MatchResult> matchResult;
+        Vector<CSSPropertyID> inlineStyleProperties;
+    };
+    mutable WeakHashMap<const Element, CachedMatchResult, WeakPtrImplWithEventTargetData> m_cachedMatchResults;
 
     UniqueRef<CustomPropertyRegistry> m_customPropertyRegistry;
     UniqueRef<CSSCounterStyleRegistry> m_counterStyleRegistry;

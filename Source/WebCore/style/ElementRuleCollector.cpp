@@ -891,6 +891,11 @@ void ElementRuleCollector::addMatchedProperties(MatchedProperties&& matchedPrope
         m_result->nonCacheablePropertyIds.clear();
     }
 
+    if (matchedProperties.fromStyleAttribute == FromStyleAttribute::Yes) {
+        ASSERT(!m_result->styleAttributeDeclarationIndex);
+        m_result->styleAttributeDeclarationIndex = declarations.size();
+    }
+
     declarations.append(WTFMove(matchedProperties));
 }
 

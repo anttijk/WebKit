@@ -76,5 +76,7 @@ private:
     unsigned m_additionsSinceLastSweep { 0 };
 };
 
+bool mayOtherPropertiesBeAffectedByHighPriorityStyleChange(const RenderStyle&, const RenderStyle&);
+
 }
 }

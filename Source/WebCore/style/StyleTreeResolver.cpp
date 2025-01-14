@@ -166,8 +166,9 @@ ResolvedStyle TreeResolver::styleForStyleable(const Styleable& styleable, Resolu
         return { WTFMove(style) };
 
     if (resolutionType == ResolutionType::FullWithMatchResultCache) {
+//        WTFLogAlways("FullWithMatchResultCache");
         if (auto cachedMatchResult = m_document->styleScope().cachedMatchResult(element))
-            return scope().resolver->styleForElementWithCachedMatchResult(element, resolutionContext, *cachedMatchResult, *existingStyle);
+            return scope().resolver->styleForElementWithCachedMatchResult(element, resolutionContext, *cachedMatchResult, *existingStyle, PropertyCascade::PropertyType::InlineStyle);
     }
 
     auto elementStyle = scope().resolver->styleForElement(element, resolutionContext);

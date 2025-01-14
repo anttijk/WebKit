@@ -26,6 +26,7 @@
 #include "InspectorCSSOMWrappers.h"
 #include "MatchedDeclarationsCache.h"
 #include "MediaQueryEvaluator.h"
+#include "PropertyCascade.h"
 #include "RuleSet.h"
 #include "StyleScopeRuleSets.h"
 #include <memory>
@@ -93,7 +94,7 @@ public:
     ~Resolver();
 
     ResolvedStyle styleForElement(Element&, const ResolutionContext&, RuleMatchingBehavior = RuleMatchingBehavior::MatchAllRules);
-    ResolvedStyle styleForElementWithCachedMatchResult(Element&, const ResolutionContext&, const MatchResult&, const RenderStyle& existingRenderStyle);
+    ResolvedStyle styleForElementWithCachedMatchResult(Element&, const ResolutionContext&, const MatchResult&, const RenderStyle& existingRenderStyle, OptionSet<PropertyCascade::PropertyType> includedProperties);
 
     void keyframeStylesForAnimation(Element&, const RenderStyle& elementStyle, const ResolutionContext&, BlendingKeyframes&);
 

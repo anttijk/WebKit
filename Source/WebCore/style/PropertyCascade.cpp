@@ -236,6 +236,11 @@ bool PropertyCascade::addMatch(const MatchedProperties& matchedProperties, Casca
             if (matchedProperties.isCacheable == IsCacheable::Partially && m_includedProperties.contains(PropertyType::NonCacheable))
                 return true;
 
+            if (matchedProperties.fromStyleAttribute == FromStyleAttribute::Yes && m_includedProperties.contains(PropertyType::InlineStyle)) {
+//                WTFLogAlways("PropertyType::InlineStyle");
+                return true;
+            }
+
             // If we have applied this property for some reason already we must apply anything that overrides it.
             if (hasProperty(propertyID, *current.value()))
                 return true;

@@ -50,6 +50,7 @@ public:
         AfterTransition = 1 << 4,
         StartingStyle = 1 << 5,
         NonCacheable = 1 << 6,
+        InlineStyle = 1 << 7,
     };
     static constexpr OptionSet<PropertyType> normalProperties() { return { PropertyType::NonInherited,  PropertyType::Inherited }; }
     static constexpr OptionSet<PropertyType> startingStyleProperties() { return normalProperties() | PropertyType::StartingStyle; }

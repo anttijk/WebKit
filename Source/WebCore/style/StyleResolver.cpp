@@ -318,15 +318,40 @@ ResolvedStyle Resolver::styleForElement(Element& element, const ResolutionContex
     return { state.takeStyle(), WTFMove(elementStyleRelations), collector.releaseMatchResult() };
 }
 
-ResolvedStyle Resolver::styleForElementWithCachedMatchResult(Element& element, const ResolutionContext& context, const MatchResult& matchResult, const RenderStyle& existingRenderStyle)
+ResolvedStyle Resolver::styleForElementWithCachedMatchResult(Element& element, const ResolutionContext& context, const MatchResult& matchResult, const RenderStyle& existingRenderStyle, OptionSet<PropertyCascade::PropertyType> includedProperties)
 {
-    auto state = initializeStateAndStyle(element, context);
+    auto state = State { element, context.parentStyle, context.documentElementStyle };
+    state.setStyle(RenderStyle::clonePtr(existingRenderStyle));
+
     auto& style = *state.style();
 
     style.copyPseudoElementBitsFrom(existingRenderStyle);
     copyRelations(style, existingRenderStyle);
 
-    applyMatchedProperties(state, matchResult);
+    auto tryApplyPartially = [&] {
+        if (includedProperties == PropertyCascade::normalProperties())
+            return false;
+
+        Builder builder(style, builderContext(state), matchResult, CascadeLevel::Author, includedProperties);
+        builder.applyTopPriorityProperties();
+        builder.applyHighPriorityProperties();
+
+        // See if the style change may affect other properties (via font-relative units and such).
+        if (mayOtherPropertiesBeAffectedByHighPriorityStyleChange(style, existingRenderStyle))
+            return false;
+
+        builder.applyNonHighPriorityProperties();
+
+        for (auto& contentAttribute : builder.state().registeredContentAttributes())
+            ruleSets().mutableFeatures().registerContentAttribute(contentAttribute);
+
+//        WTFLogAlways("partial");
+
+        return true;
+    };
+
+    if (!tryApplyPartially())
+        applyMatchedProperties(state, matchResult);
 
     Adjuster adjuster(document(), *state.parentStyle(), context.parentBoxStyle, &element);
     adjuster.adjust(style, state.userAgentAppearanceStyle());

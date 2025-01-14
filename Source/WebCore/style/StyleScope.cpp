@@ -980,7 +980,7 @@ const MatchResult* Scope::cachedMatchResult(const Element& element)
     if (it == m_cachedMatchResults.end())
         return { };
 
-    auto& matchResult = *it->value;
+    auto& cachedMatchResult = it->value;
 
     auto inlineStyleMatches = [&] {
         auto* styledElement = dynamicDowncast<StyledElement>(element);
@@ -988,12 +988,17 @@ const MatchResult* Scope::cachedMatchResult(const Element& element)
             return false;
 
         auto& inlineStyle = *styledElement->inlineStyle();
+        auto inlineStylePropertyCount = cachedMatchResult.inlineStyleProperties.size();
 
-        for (auto& declaration : matchResult.authorDeclarations) {
-            if (&declaration.properties.get() == &inlineStyle)
-                return true;
+        if (inlineStylePropertyCount != inlineStyle.propertyCount())
+            return false;
+
+        for (unsigned i = 0; i < inlineStylePropertyCount; ++i) {
+            if (cachedMatchResult.inlineStyleProperties[i] != inlineStyle.propertyAt(i).id())
+                return false;
         }
-        return false;
+//        WTFLogAlways("cachedMatchResult %zu", inlineStylePropertyCount);
+        return true;
     }();
 
     if (!inlineStyleMatches) {
@@ -1001,7 +1006,7 @@ const MatchResult* Scope::cachedMatchResult(const Element& element)
         return { };
     }
 
-    return &matchResult;
+    return cachedMatchResult.matchResult.get();
 }
 
 void Scope::updateCachedMatchResult(const Element& element, const MatchResult& matchResult)
@@ -1009,9 +1014,19 @@ void Scope::updateCachedMatchResult(const Element& element, const MatchResult& m
     // For now we cache match results if there is mutable inline style. This way we can avoid
     // selector matching when it gets mutated again.
     auto* styledElement = dynamicDowncast<StyledElement>(element);
-    if (styledElement && styledElement->inlineStyle() && styledElement->inlineStyle()->isMutable())
-        m_cachedMatchResults.set(element, makeUniqueRef<MatchResult>(matchResult));
-    else
+    if (styledElement && styledElement->inlineStyle() && styledElement->inlineStyle()->isMutable() && matchResult.styleAttributeDeclarationIndex) {
+
+        auto& cachedProperties = matchResult.styleAttributeDeclaration()->properties;
+
+        Vector<CSSPropertyID> inlineStyleProperties;
+
+        auto propertyCount = cachedProperties->propertyCount();
+        inlineStyleProperties.reserveCapacity(propertyCount);
+        for (unsigned i = 0; i < propertyCount; ++i)
+            inlineStyleProperties.append(cachedProperties->propertyAt(i).id());
+
+        m_cachedMatchResults.set(element, CachedMatchResult { makeUnique<MatchResult>(matchResult), WTFMove(inlineStyleProperties) });
+    } else
         m_cachedMatchResults.remove(element);
 }
 

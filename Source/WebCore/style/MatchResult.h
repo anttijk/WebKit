@@ -56,12 +56,14 @@ struct MatchResult {
     bool isForLink { false };
     bool isCompletelyNonCacheable { false };
     bool hasStartingStyle { false };
+    std::optional<unsigned> styleAttributeDeclarationIndex;
     Vector<MatchedProperties> userAgentDeclarations;
     Vector<MatchedProperties> userDeclarations;
     Vector<MatchedProperties> authorDeclarations;
     Vector<CSSPropertyID, 4> nonCacheablePropertyIds;
 
     bool isEmpty() const { return userAgentDeclarations.isEmpty() && userDeclarations.isEmpty() && authorDeclarations.isEmpty(); }
+    const MatchedProperties* styleAttributeDeclaration() const { return styleAttributeDeclarationIndex ? &authorDeclarations[*styleAttributeDeclarationIndex] : nullptr; }
 
     friend bool operator==(const MatchResult&, const MatchResult&) = default;
     bool cacheablePropertiesEqual(const MatchResult&) const;
