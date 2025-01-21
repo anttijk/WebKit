@@ -856,7 +856,7 @@ std::unique_ptr<RenderStyle> TreeResolver::resolveAgainWithParentStyle(const Res
         return nullptr;
 
     Adjuster adjuster(m_document, parentStyle, resolutionContext.parentBoxStyle, !styleable.pseudoElementIdentifier ? &styleable.element : nullptr);
-    adjuster.adjust(*newStyle, nullptr);
+    adjuster.adjust(*newStyle);
 
     return newStyle;
 }

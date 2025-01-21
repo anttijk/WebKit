@@ -128,17 +128,12 @@ public:
     const RenderStyle* parentStyle() const { return m_parentStyle; }
     const RenderStyle* rootElementStyle() const { return m_rootElementStyle; }
 
-    const RenderStyle* userAgentAppearanceStyle() const { return m_userAgentAppearanceStyle.get(); }
-    void setUserAgentAppearanceStyle(std::unique_ptr<RenderStyle> style) { m_userAgentAppearanceStyle = WTFMove(style); }
-
 private:
     const Element* m_element { };
     std::unique_ptr<RenderStyle> m_style;
     const RenderStyle* m_parentStyle { };
     std::unique_ptr<const RenderStyle> m_ownedParentStyle;
     const RenderStyle* m_rootElementStyle { };
-
-    std::unique_ptr<RenderStyle> m_userAgentAppearanceStyle;
 };
 
 Ref<Resolver> Resolver::create(Document& document, ScopeType scopeType)
@@ -310,7 +305,7 @@ ResolvedStyle Resolver::styleForElement(Element& element, const ResolutionContex
     applyMatchedProperties(state, collector.matchResult());
 
     Adjuster adjuster(document(), *state.parentStyle(), context.parentBoxStyle, &element);
-    adjuster.adjust(style, state.userAgentAppearanceStyle());
+    adjuster.adjust(style);
 
     if (style.usesViewportUnits())
         document().setHasStyleWithViewportUnits();
@@ -329,7 +324,7 @@ ResolvedStyle Resolver::styleForElementWithCachedMatchResult(Element& element, c
     applyMatchedProperties(state, matchResult);
 
     Adjuster adjuster(document(), *state.parentStyle(), context.parentBoxStyle, &element);
-    adjuster.adjust(style, state.userAgentAppearanceStyle());
+    adjuster.adjust(style);
 
     if (style.usesViewportUnits())
         document().setHasStyleWithViewportUnits();
@@ -384,7 +379,7 @@ std::unique_ptr<RenderStyle> Resolver::styleForKeyframe(Element& element, const 
     builder.applyAllProperties();
 
     Adjuster adjuster(document(), *state.parentStyle(), nullptr, elementStyle.pseudoElementType() == PseudoId::None ? &element : nullptr);
-    adjuster.adjust(*state.style(), state.userAgentAppearanceStyle());
+    adjuster.adjust(*state.style());
 
     return state.takeStyle();
 }
@@ -544,7 +539,7 @@ std::optional<ResolvedStyle> Resolver::styleForPseudoElement(Element& element, c
     applyMatchedProperties(state, collector.matchResult());
 
     Adjuster adjuster(document(), *state.parentStyle(), context.parentBoxStyle, nullptr);
-    adjuster.adjust(*state.style(), state.userAgentAppearanceStyle());
+    adjuster.adjust(*state.style());
 
     Adjuster::adjustVisibilityForPseudoElement(*state.style(), element);
 
@@ -629,19 +624,6 @@ Vector<RefPtr<const StyleRule>> Resolver::pseudoStyleRulesForElement(const Eleme
     return collector.matchedRuleList();
 }
 
-static bool elementTypeHasAppearanceFromUAStyle(const Element& element)
-{
-    // NOTE: This is just a hard-coded list of elements that have some -webkit-appearance value in html.css
-    const auto& localName = element.localName();
-    return localName == HTMLNames::inputTag
-        || localName == HTMLNames::textareaTag
-        || localName == HTMLNames::buttonTag
-        || localName == HTMLNames::progressTag
-        || localName == HTMLNames::selectTag
-        || localName == HTMLNames::meterTag
-        || (element.isInUserAgentShadowTree() && element.userAgentPart() == UserAgentParts::webkitListButton());
-}
-
 void Resolver::invalidateMatchedDeclarationsCache()
 {
     m_matchedDeclarationsCache.invalidate();
@@ -682,12 +664,8 @@ void Resolver::applyMatchedProperties(State& state, const MatchResult& matchResu
             // Link status is treated like an inherited property. We need to explicitly restore it.
             style.setInsideLink(linkStatus);
 
-            if (!hasExplicitlyInherited && matchResult.nonCacheablePropertyIds.isEmpty()) {
-                if (cacheEntry->userAgentAppearanceStyle && elementTypeHasAppearanceFromUAStyle(element))
-                    state.setUserAgentAppearanceStyle(RenderStyle::clonePtr(*cacheEntry->userAgentAppearanceStyle));
-
+            if (!hasExplicitlyInherited && matchResult.nonCacheablePropertyIds.isEmpty())
                 return;
-            }
         }
 
         includedProperties = { };
@@ -703,17 +681,6 @@ void Resolver::applyMatchedProperties(State& state, const MatchResult& matchResu
             includedProperties.add(PropertyCascade::PropertyType::ExplicitlyInherited);
         if (!matchResult.nonCacheablePropertyIds.isEmpty())
             includedProperties.add(PropertyCascade::PropertyType::NonCacheable);
-    }
-
-    if (elementTypeHasAppearanceFromUAStyle(element)) {
-        // Find out if there's a -webkit-appearance property in effect from the UA sheet.
-        // If so, we cache the border and background styles so that RenderTheme::adjustStyle()
-        // can look at them later to figure out if this is a styled form control or not.
-        auto userAgentStyle = RenderStyle::clonePtr(style);
-        Builder builder(*userAgentStyle, builderContext(state), matchResult, CascadeLevel::UserAgent);
-        builder.applyAllProperties();
-
-        state.setUserAgentAppearanceStyle(WTFMove(userAgentStyle));
     }
 
     Builder builder(*state.style(), builderContext(state), matchResult, CascadeLevel::Author, includedProperties);
@@ -740,7 +707,7 @@ void Resolver::applyMatchedProperties(State& state, const MatchResult& matchResu
         return;
 
     if (MatchedDeclarationsCache::isCacheable(element, style, parentStyle))
-        m_matchedDeclarationsCache.add(style, parentStyle, state.userAgentAppearanceStyle(), cacheHash, matchResult);
+        m_matchedDeclarationsCache.add(style, parentStyle, cacheHash, matchResult);
 }
 
 bool Resolver::hasSelectorForAttribute(const Element& element, const AtomString& attributeName) const

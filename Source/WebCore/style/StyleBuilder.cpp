@@ -401,7 +401,7 @@ void Builder::applyProperty(CSSPropertyID id, CSSValue& value, SelectorChecker::
     BuilderGenerated::applyProperty(id, m_state, valueToApply.get(), valueType);
 
     if (!isUnset) {
-        if (cascadeLevel == CascadeLevel::Author && m_state.element()->isDevolvableWidget() && CSSProperty::disablesNativeAppearance(id) && m_state.applyPropertyToRegularStyle())
+        if (cascadeLevel != CascadeLevel::UserAgent && CSSProperty::disablesNativeAppearance(id) && m_state.applyPropertyToRegularStyle())
             style.setNativeAppearanceDisabled(true);
 
         if (m_state.isCurrentPropertyInvalidAtComputedValueTime()) {
