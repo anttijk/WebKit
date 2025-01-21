@@ -212,7 +212,20 @@ static bool shouldCheckLegacyStylesForNativeAppearance(const Element* element)
 #endif
 }
 
-void RenderTheme::adjustStyle(RenderStyle& style, const Element* element, const RenderStyle* userAgentAppearanceStyle)
+bool RenderTheme::hasAppearanceForElementTypeFromUAStyle(const Element& element)
+{
+    // NOTE: This is just a hard-coded list of elements that have some appearance value in html.css
+    const auto& localName = element.localName();
+    return localName == HTMLNames::inputTag
+        || localName == HTMLNames::textareaTag
+        || localName == HTMLNames::buttonTag
+        || localName == HTMLNames::progressTag
+        || localName == HTMLNames::selectTag
+        || localName == HTMLNames::meterTag
+        || (element.isInUserAgentShadowTree() && element.userAgentPart() == UserAgentParts::webkitListButton());
+}
+
+void RenderTheme::adjustStyle(RenderStyle& style, const Element* element)
 {
     auto autoAppearance = autoAppearanceForElement(style, element);
     auto appearance = adjustAppearanceForElement(style, element, autoAppearance);
@@ -230,9 +243,10 @@ void RenderTheme::adjustStyle(RenderStyle& style, const Element* element, const 
 
     bool widgetMayDevolve = devolvableWidgetsEnabledAndSupported(element);
     bool widgetHasNativeAppearanceDisabled = widgetMayDevolve && element->isDevolvableWidget() && style.nativeAppearanceDisabled() && !isAppearanceAllowedForAllElements(appearance);
+    bool hasAppearanceFromUAStyle = element && hasAppearanceForElementTypeFromUAStyle(*element);
 
     if (!widgetMayDevolve || shouldCheckLegacyStylesForNativeAppearance(element))
-        widgetHasNativeAppearanceDisabled |= userAgentAppearanceStyle && isControlStyled(style, *userAgentAppearanceStyle);
+        widgetHasNativeAppearanceDisabled |= hasAppearanceFromUAStyle && isControlStyled(style);
 
     if (widgetHasNativeAppearanceDisabled) {
         switch (appearance) {
@@ -259,7 +273,7 @@ void RenderTheme::adjustStyle(RenderStyle& style, const Element* element, const 
     }
 
     if (!isAppearanceAllowedForAllElements(appearance)
-        && !userAgentAppearanceStyle
+        && !hasAppearanceFromUAStyle
         && autoAppearance == StyleAppearance::None
         && !style.borderAndBackgroundEqual(RenderStyle::defaultStyle()))
         style.setUsedAppearance(StyleAppearance::None);
@@ -1116,7 +1130,7 @@ bool RenderTheme::isControlContainer(StyleAppearance appearance) const
     return appearance != StyleAppearance::Checkbox && appearance != StyleAppearance::Radio;
 }
 
-bool RenderTheme::isControlStyled(const RenderStyle& style, const RenderStyle& userAgentStyle) const
+bool RenderTheme::isControlStyled(const RenderStyle& style) const
 {
     switch (style.usedAppearance()) {
     case StyleAppearance::PushButton:
@@ -1132,7 +1146,7 @@ bool RenderTheme::isControlStyled(const RenderStyle& style, const RenderStyle& u
     case StyleAppearance::TextField:
     case StyleAppearance::TextArea:
         // Test the style to see if the UA border and background match.
-        return !style.borderAndBackgroundEqual(userAgentStyle);
+        return style.nativeAppearanceDisabled();
     default:
         return false;
     }

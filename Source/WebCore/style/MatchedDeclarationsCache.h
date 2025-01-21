@@ -50,13 +50,12 @@ public:
         MatchResult matchResult;
         std::unique_ptr<const RenderStyle> renderStyle;
         std::unique_ptr<const RenderStyle> parentRenderStyle;
-        std::unique_ptr<const RenderStyle> userAgentAppearanceStyle;
 
         bool isUsableAfterHighPriorityProperties(const RenderStyle&) const;
     };
 
     const Entry* find(unsigned hash, const MatchResult&, const StyleCustomPropertyData& inheritedCustomProperties);
-    void add(const RenderStyle&, const RenderStyle& parentStyle, const RenderStyle* userAgentAppearanceStyle, unsigned hash, const MatchResult&);
+    void add(const RenderStyle&, const RenderStyle& parentStyle, unsigned hash, const MatchResult&);
     void remove(unsigned hash);
 
     // Every N additions to the matched declaration cache trigger a sweep where entries holding

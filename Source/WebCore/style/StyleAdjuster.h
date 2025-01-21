@@ -49,7 +49,7 @@ class Adjuster {
 public:
     Adjuster(const Document&, const RenderStyle& parentStyle, const RenderStyle* parentBoxStyle, Element*);
 
-    void adjust(RenderStyle&, const RenderStyle* userAgentAppearanceStyle) const;
+    void adjust(RenderStyle&) const;
     void adjustAnimatedStyle(RenderStyle&, OptionSet<AnimationImpact>) const;
 
     static void adjustVisibilityForPseudoElement(RenderStyle&, const Element& host);
@@ -74,7 +74,7 @@ private:
     void adjustDisplayContentsStyle(RenderStyle&) const;
     void adjustForSiteSpecificQuirks(RenderStyle&) const;
 
-    void adjustThemeStyle(RenderStyle&, const RenderStyle* userAgentAppearanceStyle) const;
+    void adjustThemeStyle(RenderStyle&) const;
 
     static OptionSet<EventListenerRegionType> computeEventListenerRegionTypes(const Document&, const RenderStyle&, const EventTarget&, OptionSet<EventListenerRegionType>);
 

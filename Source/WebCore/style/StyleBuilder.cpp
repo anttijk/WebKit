@@ -409,7 +409,16 @@ void Builder::applyProperty(CSSPropertyID id, CSSValue& value, SelectorChecker::
     BuilderGenerated::applyProperty(id, m_state, valueToApply.get(), valueType);
 
     if (!isUnset) {
-        if (cascadeLevel == CascadeLevel::Author && m_state.element()->isDevolvableWidget() && CSSProperty::disablesNativeAppearance(id) && m_state.applyPropertyToRegularStyle())
+        auto shouldDisablsNativeAppearance = [&] {
+            if (cascadeLevel != CascadeLevel::Author)
+                return false;
+            if (!CSSProperty::disablesNativeAppearance(id))
+                return false;
+            if (!m_state.applyPropertyToRegularStyle())
+                return false;
+            return m_state.element()->isDevolvableWidget() || RenderTheme::hasAppearanceForElementTypeFromUAStyle(*m_state.element());
+        };
+        if (shouldDisablsNativeAppearance())
             style.setNativeAppearanceDisabled(true);
 
         if (m_state.isCurrentPropertyInvalidAtComputedValueTime()) {

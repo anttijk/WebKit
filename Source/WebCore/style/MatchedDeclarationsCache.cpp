@@ -152,7 +152,7 @@ const MatchedDeclarationsCache::Entry* MatchedDeclarationsCache::find(unsigned h
     return &entry;
 }
 
-void MatchedDeclarationsCache::add(const RenderStyle& style, const RenderStyle& parentStyle, const RenderStyle* userAgentAppearanceStyle, unsigned hash, const MatchResult& matchResult)
+void MatchedDeclarationsCache::add(const RenderStyle& style, const RenderStyle& parentStyle, unsigned hash, const MatchResult& matchResult)
 {
     constexpr unsigned additionsBetweenSweeps = 100;
     if (++m_additionsSinceLastSweep >= additionsBetweenSweeps && !m_sweepTimer.isActive()) {
@@ -160,16 +160,10 @@ void MatchedDeclarationsCache::add(const RenderStyle& style, const RenderStyle& 
         m_sweepTimer.startOneShot(sweepDelay);
     }
 
-    auto userAgentAppearanceStyleCopy = [&]() -> std::unique_ptr<RenderStyle> {
-        if (userAgentAppearanceStyle)
-            return RenderStyle::clonePtr(*userAgentAppearanceStyle);
-        return { };
-    };
-
     ASSERT(hash);
     // Note that we don't cache the original RenderStyle instance. It may be further modified.
     // The RenderStyle in the cache is really just a holder for the substructures and never used as-is.
-    m_entries.add(hash, Entry { matchResult, RenderStyle::clonePtr(style), RenderStyle::clonePtr(parentStyle), userAgentAppearanceStyleCopy() });
+    m_entries.add(hash, Entry { matchResult, RenderStyle::clonePtr(style), RenderStyle::clonePtr(parentStyle) });
 }
 
 void MatchedDeclarationsCache::remove(unsigned hash)
