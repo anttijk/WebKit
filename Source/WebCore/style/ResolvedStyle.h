@@ -26,6 +26,13 @@
 namespace WebCore {
 namespace Style {
 
+struct MatchResultAndStyle {
+    std::unique_ptr<MatchResult> matchResult { };
+    std::unique_ptr<RenderStyle> unadjustedStyle;
+    std::unique_ptr<RenderStyle> userAgentAppearanceStyle;
+    std::unique_ptr<Relations> relations { };
+};
+
 struct ResolvedStyle {
     std::unique_ptr<RenderStyle> style;
     std::unique_ptr<Relations> relations { };

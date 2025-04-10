@@ -27,54 +27,147 @@
 #include "MatchResultCache.h"
 
 #include "MatchResult.h"
+#include "ResolvedStyle.h"
 #include "StyleProperties.h"
 #include "StyledElement.h"
+#include <wtf/BitSet.h>
 
 namespace WebCore {
 namespace Style {
 
+struct MatchResultCache::Entry {
+    MatchResultAndStyle matchResultAndStyle;
+
+    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+};
+
 MatchResultCache::MatchResultCache() = default;
 MatchResultCache::~MatchResultCache() = default;
 
-const MatchResult* MatchResultCache::get(const Element& element)
+inline std::unique_ptr<RenderStyle> copyStyle(auto& style)
 {
-    auto it = m_cachedMatchResults.find(element);
-    if (it == m_cachedMatchResults.end())
+    if (!style)
+        return { };
+    return RenderStyle::clonePtr(*style);
+};
+
+inline MatchResultAndStyle copyImmutable(const MatchResultAndStyle& other)
+{
+    auto resultCopy = makeUnique<MatchResult>(*other.matchResult);
+    for (auto& declaration : resultCopy->authorDeclarations) {
+        if (auto* mutableProperties = dynamicDowncast<MutableStyleProperties>(declaration.properties.get()))
+            declaration.properties = mutableProperties->immutableCopy();
+    };
+
+    return {
+        .matchResult = WTFMove(resultCopy),
+        .unadjustedStyle = copyStyle(other.unadjustedStyle),
+        .userAgentAppearanceStyle = copyStyle(other.userAgentAppearanceStyle),
+        .relations = other.relations ? makeUnique<Relations>(*other.relations) : std::unique_ptr<Relations> { }
+    };
+}
+
+inline MatchResultAndStyle copyReplacingInlineStyle(const MatchResultAndStyle& cachedResult, const StyleProperties& inlineStyle, size_t inlineStyleIndex)
+{
+    auto resultCopy = makeUnique<MatchResult>(*cachedResult.matchResult);
+
+    auto& inlineStyleDeclaration = resultCopy->authorDeclarations[inlineStyleIndex];
+    ASSERT(inlineStyleDeclaration.fromStyleAttribute == FromStyleAttribute::Yes);
+    inlineStyleDeclaration.properties = inlineStyle.immutableCopyIfNeeded();
+
+    return {
+        .matchResult = WTFMove(resultCopy),
+        .unadjustedStyle = copyStyle(cachedResult.unadjustedStyle),
+        .userAgentAppearanceStyle = copyStyle(cachedResult.userAgentAppearanceStyle),
+        .relations = cachedResult.relations ? makeUnique<Relations>(*cachedResult.relations) : std::unique_ptr<Relations> { }
+    };
+}
+
+static PropertyCascade::IncludedProperties computeChangedProperties(const StyleProperties& from, const StyleProperties& to)
+{
+
+    WTF::BitSet<numCSSProperties> ids;
+    for (auto property : to) {
+        // FIXME: Support custom properties.
+        if (property.id() == CSSPropertyCustom)
+            return PropertyCascade::normalProperties();
+        ids.set(property.id());
+    }
+
+    for (auto property : from) {
+        // FIXME: Support removal of properties with partial application.
+        if (!ids.get(property.id()))
+            return PropertyCascade::normalProperties();
+    }
+
+    PropertyCascade::IncludedProperties result;
+    for (auto index : ids) {
+        auto propertyID = static_cast<CSSPropertyID>(index);
+        auto fromValue = from.getPropertyCSSValue(propertyID);
+        auto toValue = to.getPropertyCSSValue(propertyID);
+        if (!fromValue || !toValue || *fromValue != *toValue) {
+            // Low-priority properties are safe to apply by themselves as no other property may depend on them.
+            // FIXME: CSSPropertyLineHeight should be high-priority as other properties may depend on it via 'lh' unit.
+            if (propertyID < firstLowPriorityProperty || propertyID == CSSPropertyLineHeight)
+                return PropertyCascade::normalProperties();
+            result.ids.append(propertyID);
+        }
+    }
+    return result;
+}
+
+const std::optional<CachedMatchResult> MatchResultCache::resultWithCurrentInlineStyle(const Element& element)
+{
+    auto it = m_entries.find(element);
+    if (it == m_entries.end())
         return { };
 
-    auto& matchResult = *it->value;
+    auto& matchResultAndStyle = it->value->matchResultAndStyle;
 
-    auto inlineStyleMatches = [&] {
-        auto* styledElement = dynamicDowncast<StyledElement>(element);
-        if (!styledElement || !styledElement->inlineStyle())
-            return false;
+    auto* styledElement = dynamicDowncast<StyledElement>(element);
+    auto* inlineStyle = styledElement ? styledElement->inlineStyle() : nullptr;
 
-        auto& inlineStyle = *styledElement->inlineStyle();
-
-        for (auto& declaration : matchResult.authorDeclarations) {
-            if (&declaration.properties.get() == &inlineStyle)
-                return true;
-        }
-        return false;
-    }();
-
-    if (!inlineStyleMatches) {
-        m_cachedMatchResults.remove(it);
+    if (!inlineStyle) {
+        m_entries.remove(it);
         return { };
     }
 
-    return &matchResult;
+    auto inlineStyleIndex = [&]() -> std::optional<size_t> {
+        size_t index = 0;
+        for (auto& declaration : matchResultAndStyle.matchResult->authorDeclarations) {
+            if (declaration.fromStyleAttribute == FromStyleAttribute::Yes)
+                return index;
+            ++index;
+        }
+        return { };
+    }();
+
+    if (!inlineStyleIndex) {
+        m_entries.remove(it);
+        return { };
+    }
+
+    auto changedProperties = computeChangedProperties(matchResultAndStyle.matchResult->authorDeclarations[*inlineStyleIndex].properties, *inlineStyle);
+
+    auto updatedMatchResult = copyReplacingInlineStyle(matchResultAndStyle,  *inlineStyle, *inlineStyleIndex);
+
+    return CachedMatchResult {
+        .matchResultAndStyle = WTFMove(updatedMatchResult),
+        .changedProperties = WTFMove(changedProperties)
+    };
 }
 
-void MatchResultCache::update(const Element& element, const MatchResult& matchResult)
+void MatchResultCache::update(const Element& element, const MatchResultAndStyle& matchResultAndStyle)
 {
     // For now we cache match results if there is mutable inline style. This way we can avoid
     // selector matching when it gets mutated again.
     auto* styledElement = dynamicDowncast<StyledElement>(element);
-    if (styledElement && styledElement->inlineStyle() && styledElement->inlineStyle()->isMutable())
-        m_cachedMatchResults.set(element, makeUniqueRef<MatchResult>(matchResult));
-    else
-        m_cachedMatchResults.remove(element);
+    if (styledElement && styledElement->inlineStyle() && styledElement->inlineStyle()->isMutable()) {
+        m_entries.set(element, makeUniqueRef<Entry>(Entry {
+            .matchResultAndStyle = copyImmutable(matchResultAndStyle)
+        }));
+    } else
+        m_entries.remove(element);
 }
 
 }
