@@ -141,7 +141,7 @@ const std::optional<CachedMatchResult> MatchResultCache::resultWithCurrentInline
     if (it == m_entries.end())
         return { };
 
-    CheckedRef entry = *it->value;
+    auto& entry = *it->value;
 
     auto* styledElement = dynamicDowncast<StyledElement>(element);
     RefPtr inlineStyle = styledElement ? styledElement->inlineStyle() : nullptr;
@@ -154,9 +154,9 @@ const std::optional<CachedMatchResult> MatchResultCache::resultWithCurrentInline
     auto changedProperties = computeAndUpdateChangedProperties(entry);
 
     return CachedMatchResult {
-        .unadjustedStyle = copy(entry->unadjustedStyle),
+        .unadjustedStyle = copy(entry.unadjustedStyle),
         .changedProperties = WTFMove(changedProperties),
-        .styleToUpdate = *entry->unadjustedStyle.style
+        .styleToUpdate = *entry.unadjustedStyle.style
     };
 }
 
