@@ -381,27 +381,6 @@ void RenderTreeUpdater::updateAfterDescendants(Element& element, const Style::El
         element.didAttachRenderers();
 }
 
-static bool pseudoStyleCacheIsInvalid(RenderElement* renderer, RenderStyle* newStyle)
-{
-    const auto& currentStyle = renderer->style();
-
-    const auto* pseudoStyleCache = currentStyle.cachedPseudoStyles();
-    if (!pseudoStyleCache)
-        return false;
-
-    for (auto& [key, value] : pseudoStyleCache->styles) {
-        Style::PseudoElementIdentifier pseudoElementIdentifier { value->pseudoElementType(), value->pseudoElementNameArgument() };
-        auto newPseudoStyle = renderer->getUncachedPseudoStyle(pseudoElementIdentifier, newStyle, newStyle);
-        if (!newPseudoStyle)
-            return true;
-        if (*newPseudoStyle != *value) {
-            newStyle->addCachedPseudoStyle(WTFMove(newPseudoStyle));
-            return true;
-        }
-    }
-    return false;
-}
-
 void RenderTreeUpdater::updateRendererStyle(RenderElement& renderer, RenderStyle&& newStyle, StyleDifference minimalStyleDifference)
 {
     auto oldStyle = RenderStyle::clone(renderer.style());
@@ -505,13 +484,8 @@ void RenderTreeUpdater::updateElementRenderer(Element& element, const Style::Ele
         return;
     }
 
-    if (!elementUpdate.changes) {
-        if (pseudoStyleCacheIsInvalid(&renderer, &elementUpdateStyle)) {
-            updateRendererStyle(renderer, WTFMove(elementUpdateStyle), StyleDifference::Equal);
-            return;
-        }
+    if (!elementUpdate.changes)
         return;
-    }
 
     updateRendererStyle(renderer, WTFMove(elementUpdateStyle), StyleDifference::Equal);
 }
