@@ -1006,6 +1006,9 @@ void RenderElement::styleWillChange(StyleDifference diff, const RenderStyle& new
         if (drawsRootBackground && newStyle.hasEntirelyFixedBackground() && view().compositor().supportsFixedRootBackgroundCompositing())
             newStyleSlowScroll = false;
     }
+    // FIXME: Scrolling tree support for anchor positioning.
+    if (newStyle.position() == PositionType::Fixed && Style::AnchorPositionEvaluator::isAnchorPositioned(newStyle))
+        newStyleSlowScroll = true;
 
     if (view().frameView().hasSlowRepaintObject(*this)) {
         if (!newStyleSlowScroll)
@@ -1176,7 +1179,7 @@ void RenderElement::willBeDestroyed()
     if (!renderTreeBeingDestroyed() && element())
         document().contentChangeObserver().rendererWillBeDestroyed(*element());
 #endif
-    if (m_style.hasAnyFixedBackground() && !settings().fixedBackgroundsPaintRelativeToDocument())
+    if ((m_style.hasAnyFixedBackground() && !settings().fixedBackgroundsPaintRelativeToDocument()) || (m_style.position() == PositionType::Fixed && Style::AnchorPositionEvaluator::isAnchorPositioned(m_style)))
         view().protectedFrameView()->removeSlowRepaintObject(*this);
 
     unregisterForVisibleInViewportCallback();

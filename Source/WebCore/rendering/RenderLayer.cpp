@@ -48,6 +48,7 @@
 #include "RenderLayer.h"
 
 #include "AccessibilityRegionContext.h"
+#include "AnchorPositionEvaluator.h"
 #include "BitmapImage.h"
 #include "BorderShape.h"
 #include "BoxLayoutShape.h"
@@ -1534,6 +1535,8 @@ void RenderLayer::updateLayerPositionsAfterOverflowScroll()
 {
     willUpdateLayerPositions();
 
+    Style::AnchorPositionEvaluator::updatePositionsAfterScroll(renderer().protectedDocument());
+
     // FIXME: why is it OK to not check the ancestors of this layer in order to
     // initialize the HasSeenViewportConstrainedAncestor and HasSeenAncestorWithOverflowClip flags?
     recursiveUpdateLayerPositionsAfterScroll(RenderLayer::IsOverflowScroll);
@@ -1543,6 +1546,8 @@ void RenderLayer::updateLayerPositionsAfterDocumentScroll()
 {
     ASSERT(isRenderViewLayer());
     LOG(Scrolling, "RenderLayer::updateLayerPositionsAfterDocumentScroll");
+
+    Style::AnchorPositionEvaluator::updatePositionsAfterScroll(renderer().protectedDocument());
 
     willUpdateLayerPositions();
     recursiveUpdateLayerPositionsAfterScroll();

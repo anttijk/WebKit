@@ -26,6 +26,7 @@
 #include "config.h"
 #include "RenderLayerCompositor.h"
 
+#include "AnchorPositionEvaluator.h"
 #include "AsyncScrollingCoordinator.h"
 #include "BorderData.h"
 #include "BorderShape.h"
@@ -6011,6 +6012,9 @@ void RenderLayerCompositor::updateSynchronousScrollingNodes()
             rootHasSlowRepaintObjects = true;
         } else if (!layer->behavesAsFixed()) {
             LOG_WITH_STREAM(Scrolling, stream << "RenderLayerCompositor::updateSynchronousScrollingNodes - root node slow-scrolling because of fixed backgrounds");
+            rootHasSlowRepaintObjects = true;
+        } else if (Style::AnchorPositionEvaluator::isAnchorPositioned(renderer.style())) {
+            LOG_WITH_STREAM(Scrolling, stream << "RenderLayerCompositor::updateSynchronousScrollingNodes - root node slow-scrolling because of a fixed anchored element");
             rootHasSlowRepaintObjects = true;
         }
     }
