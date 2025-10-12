@@ -500,7 +500,7 @@ Inspector::Protocol::ErrorStringOr<std::tuple<RefPtr<JSON::ArrayOf<Inspector::Pr
     if (!originalElement->isPseudoElement()) {
         if (!includePseudo || *includePseudo) {
             pseudoElements = JSON::ArrayOf<Inspector::Protocol::CSS::PseudoIdMatches>::create();
-            for (PseudoId pseudoId = PseudoId::FirstPublicPseudoId; pseudoId < PseudoId::AfterLastInternalPseudoId; pseudoId = static_cast<PseudoId>(static_cast<unsigned>(pseudoId) + 1)) {
+            for (PseudoId pseudoId : allPseudoIds) {
                 // `*::marker` selectors are only applicable to elements with `display: list-item`.
                 if (pseudoId == PseudoId::Marker && element->computedStyle()->display() != DisplayType::ListItem)
                     continue;

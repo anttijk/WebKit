@@ -108,11 +108,9 @@ struct SameSizeAsRenderStyle : CanMakeCheckedPtr<SameSizeAsRenderStyle> {
 
 static_assert(sizeof(RenderStyle) == sizeof(SameSizeAsRenderStyle), "RenderStyle should stay small");
 
-static_assert(PublicPseudoIDBits == enumToUnderlyingType(PseudoId::FirstInternalPseudoId) - enumToUnderlyingType(PseudoId::FirstPublicPseudoId));
-
 static_assert(!(static_cast<unsigned>(maxTextTransformValue) >> TextTransformBits));
 
-static_assert(!((enumToUnderlyingType(PseudoId::AfterLastInternalPseudoId) - 1) >> PseudoElementTypeBits));
+static_assert(!(pseudoIdToIndex(PseudoId::Last) >> PseudoElementTypeBits));
 
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(PseudoStyleCache);
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(RenderStyle);
@@ -225,8 +223,8 @@ RenderStyle::RenderStyle(CreateDefaultStyleTag)
     m_nonInheritedFlags.firstChildState = false;
     m_nonInheritedFlags.lastChildState = false;
     m_nonInheritedFlags.isLink = false;
-    m_nonInheritedFlags.pseudoElementType = static_cast<unsigned>(PseudoId::None);
-    m_nonInheritedFlags.pseudoBits = static_cast<unsigned>(PseudoId::None);
+    m_nonInheritedFlags.pseudoElementTypeIndex = 0;
+    m_nonInheritedFlags.pseudoBits = 0;
 
     static_assert((sizeof(InheritedFlags) <= 8), "InheritedFlags does not grow");
     static_assert((sizeof(NonInheritedFlags) <= 8), "NonInheritedFlags does not grow");
@@ -3754,7 +3752,7 @@ void RenderStyle::NonInheritedFlags::dumpDifferences(TextStream& ts, const NonIn
     LOG_IF_DIFFERENT(lastChildState);
     LOG_IF_DIFFERENT(isLink);
 
-    LOG_IF_DIFFERENT_WITH_CAST(PseudoId, pseudoElementType);
+    LOG_IF_DIFFERENT_WITH_CAST(unsigned, pseudoElementTypeIndex);
     LOG_IF_DIFFERENT_WITH_CAST(unsigned, pseudoBits);
 }
 

@@ -570,7 +570,7 @@ inline bool ElementRuleCollector::ruleMatches(const RuleData& ruleData, unsigned
             specificity = selector->computeSpecificity();
     }
 
-    m_matchedPseudoElementIds.merge(context.pseudoIDSet);
+    m_matchedPseudoElementIds.add(context.pseudoIDSet);
     m_styleRelations.appendVector(context.styleRelations);
 
     return selectorMatches;

@@ -207,6 +207,8 @@ public:
 
     static OptionSet all() { return fromRaw(-1); }
 
+    static constexpr ptrdiff_t storageMemoryOffset() { return OBJECT_OFFSETOF(OptionSet, m_storage); }
+
 private:
     enum InitializationTag { FromRawValue };
     constexpr OptionSet(E e, InitializationTag)

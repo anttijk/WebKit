@@ -101,7 +101,7 @@ public:
 
         // FIXME: It would be nicer to have a separate object for return values. This requires some more work in the selector compiler.
         Style::Relations styleRelations;
-        PseudoIdSet pseudoIDSet;
+        OptionSet<PseudoId> pseudoIDSet;
         bool matchedInsideScope { false };
         bool disallowHasPseudoClass { false };
         bool scopingRootMatchesVisited { false };
@@ -120,7 +120,7 @@ public:
     struct LocalContext;
     
 private:
-    MatchResult matchRecursively(CheckingContext&, LocalContext&, PseudoIdSet&) const;
+    MatchResult matchRecursively(CheckingContext&, LocalContext&, OptionSet<PseudoId>&) const;
     bool checkOne(CheckingContext&, LocalContext&, MatchType&) const;
     bool matchSelectorList(CheckingContext&, const LocalContext&, const Element&, const CSSSelectorList&) const;
     bool matchHasPseudoClass(CheckingContext&, const Element&, const CSSSelector&) const;

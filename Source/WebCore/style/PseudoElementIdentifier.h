@@ -79,10 +79,10 @@ struct HashTraits<WebCore::Style::PseudoElementIdentifier> : GenericHashTraits<W
     typedef WebCore::Style::PseudoElementIdentifier EmptyValueType;
 
     static constexpr bool emptyValueIsZero = false;
-    static EmptyValueType emptyValue() { return WebCore::Style::PseudoElementIdentifier { WebCore::PseudoId::AfterLastInternalPseudoId, nullAtom() }; }
+    static EmptyValueType emptyValue() { return WebCore::Style::PseudoElementIdentifier { WebCore::PseudoId::None, nullAtom() }; }
 
-    static void constructDeletedValue(WebCore::Style::PseudoElementIdentifier& pseudoElementIdentifier) { pseudoElementIdentifier = WebCore::Style::PseudoElementIdentifier { WebCore::PseudoId::None, nullAtom() }; }
-    static bool isDeletedValue(const WebCore::Style::PseudoElementIdentifier& pseudoElementIdentifier) { return pseudoElementIdentifier == WebCore::Style::PseudoElementIdentifier { WebCore::PseudoId::None, nullAtom() }; }
+    static void constructDeletedValue(WebCore::Style::PseudoElementIdentifier& identifer) { new (NotNull, &identifer.nameArgument) AtomString { HashTableDeletedValue }; }
+    static bool isDeletedValue(const WebCore::Style::PseudoElementIdentifier& identifer) { return identifer.nameArgument.isHashTableDeletedValue(); }
 };
 
 template<>
@@ -97,10 +97,16 @@ struct HashTraits<std::optional<WebCore::Style::PseudoElementIdentifier>> : Gene
     typedef std::optional<WebCore::Style::PseudoElementIdentifier> EmptyValueType;
 
     static constexpr bool emptyValueIsZero = false;
-    static EmptyValueType emptyValue() { return WebCore::Style::PseudoElementIdentifier { WebCore::PseudoId::AfterLastInternalPseudoId, nullAtom() }; }
+    static EmptyValueType emptyValue() { return WebCore::Style::PseudoElementIdentifier { WebCore::PseudoId::None, nullAtom() }; }
 
-    static void constructDeletedValue(std::optional<WebCore::Style::PseudoElementIdentifier>& pseudoElementIdentifier) { pseudoElementIdentifier = WebCore::Style::PseudoElementIdentifier { WebCore::PseudoId::None, nullAtom() }; }
-    static bool isDeletedValue(const std::optional<WebCore::Style::PseudoElementIdentifier>& pseudoElementIdentifier) { return pseudoElementIdentifier == WebCore::Style::PseudoElementIdentifier { WebCore::PseudoId::None, nullAtom() }; }
+    static void constructDeletedValue(std::optional<WebCore::Style::PseudoElementIdentifier>& identifer)
+    {
+        HashTraits<WebCore::Style::PseudoElementIdentifier>::constructDeletedValue(identifer.emplace());
+    }
+    static bool isDeletedValue(const std::optional<WebCore::Style::PseudoElementIdentifier>& identifer)
+    {
+        return identifer && HashTraits<WebCore::Style::PseudoElementIdentifier>::isDeletedValue(*identifer);
+    }
 };
 
 template<>

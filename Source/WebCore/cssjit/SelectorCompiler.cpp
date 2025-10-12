@@ -4359,16 +4359,16 @@ void SelectorCodeGenerator::generateElementHasPseudoElement(Assembler::JumpList&
 void SelectorCodeGenerator::generateRequestedPseudoElementEqualsToSelectorPseudoElement(Assembler::JumpList& failureCases, const SelectorFragment& fragment, Assembler::RegisterID checkingContext)
 {
     ASSERT(m_selectorContext != SelectorContext::QuerySelector);
-
     // Make sure that the requested pseudoId equals to the pseudo element of the rightmost fragment.
     // If the rightmost fragment doesn't have a pseudo element, the requested pseudoId need to be PseudoId::None to succeed the matching.
     // Otherwise, if the requested pseudoId is not PseudoId::None, the requested pseudoId need to equal to the pseudo element of the rightmost fragment.
     if (fragmentMatchesTheRightmostElement(fragment)) {
+        static_assert(sizeof(SelectorChecker::CheckingContext::pseudoId) == 4);
         if (!fragment.pseudoElementSelector)
-            failureCases.append(m_assembler.branch8(Assembler::NotEqual, Assembler::Address(checkingContext, OBJECT_OFFSETOF(SelectorChecker::CheckingContext, pseudoId)), Assembler::TrustedImm32(static_cast<unsigned>(PseudoId::None))));
+            failureCases.append(m_assembler.branch32(Assembler::NotEqual, Assembler::Address(checkingContext, OBJECT_OFFSETOF(SelectorChecker::CheckingContext, pseudoId)), Assembler::TrustedImm32(static_cast<unsigned>(PseudoId::None))));
         else {
-            Assembler::Jump skip = m_assembler.branch8(Assembler::Equal, Assembler::Address(checkingContext, OBJECT_OFFSETOF(SelectorChecker::CheckingContext, pseudoId)), Assembler::TrustedImm32(static_cast<unsigned>(PseudoId::None)));
-            failureCases.append(m_assembler.branch8(Assembler::NotEqual, Assembler::Address(checkingContext, OBJECT_OFFSETOF(SelectorChecker::CheckingContext, pseudoId)), Assembler::TrustedImm32(static_cast<unsigned>(CSSSelector::pseudoId(fragment.pseudoElementSelector->pseudoElement())))));
+            Assembler::Jump skip = m_assembler.branch32(Assembler::Equal, Assembler::Address(checkingContext, OBJECT_OFFSETOF(SelectorChecker::CheckingContext, pseudoId)), Assembler::TrustedImm32(static_cast<unsigned>(PseudoId::None)));
+            failureCases.append(m_assembler.branch32(Assembler::NotEqual, Assembler::Address(checkingContext, OBJECT_OFFSETOF(SelectorChecker::CheckingContext, pseudoId)), Assembler::TrustedImm32(static_cast<unsigned>(CSSSelector::pseudoId(fragment.pseudoElementSelector->pseudoElement())))));
             skip.link(&m_assembler);
         }
     }
@@ -4452,20 +4452,21 @@ void SelectorCodeGenerator::generateMarkPseudoStyleForPseudoElement(Assembler::J
     Assembler::JumpList successCases;
 
     // When the requested pseudoId isn't PseudoId::None, there's no need to mark the pseudo element style.
-    successCases.append(m_assembler.branch8(Assembler::NotEqual, Assembler::Address(checkingContext, OBJECT_OFFSETOF(SelectorChecker::CheckingContext, pseudoId)), Assembler::TrustedImm32(static_cast<unsigned>(PseudoId::None))));
+    static_assert(sizeof(SelectorChecker::CheckingContext::pseudoId) == 4);
+    successCases.append(m_assembler.branch32(Assembler::NotEqual, Assembler::Address(checkingContext, OBJECT_OFFSETOF(SelectorChecker::CheckingContext, pseudoId)), Assembler::TrustedImm32(static_cast<unsigned>(PseudoId::None))));
 
     // When style invalidation, there's no need to mark the pseudo element style.
     successCases.append(branchOnResolvingModeWithCheckingContext(Assembler::Equal, SelectorChecker::Mode::StyleInvalidation, checkingContext));
 
     // When resolving mode is ResolvingStyle, mark the pseudo style for pseudo element.
     PseudoId dynamicPseudo = CSSSelector::pseudoId(fragment.pseudoElementSelector->pseudoElement());
-    if (dynamicPseudo < PseudoId::FirstInternalPseudoId) {
+    if (allPublicPseudoIds.contains(dynamicPseudo)) {
         failureCases.append(branchOnResolvingModeWithCheckingContext(Assembler::NotEqual, SelectorChecker::Mode::ResolvingStyle, checkingContext));
 
         Assembler::Address pseudoIDSetAddress(checkingContext, OBJECT_OFFSETOF(SelectorChecker::CheckingContext, pseudoIDSet));
-        auto pseudoIDSetDataAddress = pseudoIDSetAddress.withOffset(PseudoIdSet::dataMemoryOffset());
-        PseudoIdSet value { dynamicPseudo };
-        m_assembler.store32(Assembler::TrustedImm32(value.data()), pseudoIDSetDataAddress);
+        auto pseudoIDSetDataAddress = pseudoIDSetAddress.withOffset(OptionSet<PseudoId>::storageMemoryOffset());
+        OptionSet<PseudoId> value { dynamicPseudo };
+        m_assembler.store32(Assembler::TrustedImm32(value.toRaw()), pseudoIDSetDataAddress);
     }
 
     // We have a pseudoElementSelector, we are not in CollectingRulesIgnoringVirtualPseudoElements so

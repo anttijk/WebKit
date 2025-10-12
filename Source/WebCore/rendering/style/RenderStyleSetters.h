@@ -177,7 +177,7 @@ inline void RenderStyle::setHasExplicitlySetPaddingRight(bool value) { SET_NESTE
 inline void RenderStyle::setHasExplicitlySetPaddingTop(bool value) { SET_NESTED(m_nonInheritedData, surroundData, hasExplicitlySetPaddingTop, value); }
 inline void RenderStyle::setHasExplicitlySetStrokeColor(bool value) { SET(m_rareInheritedData, hasSetStrokeColor, static_cast<unsigned>(value)); }
 inline void RenderStyle::setHasExplicitlySetStrokeWidth(bool value) { SET(m_rareInheritedData, hasSetStrokeWidth, static_cast<unsigned>(value)); }
-inline void RenderStyle::setHasPseudoStyles(PseudoIdSet set) { m_nonInheritedFlags.setHasPseudoStyles(set); }
+inline void RenderStyle::setHasPseudoStyles(OptionSet<PseudoId> set) { m_nonInheritedFlags.setHasPseudoStyles(set); }
 inline void RenderStyle::setHasVisitedLinkAutoCaretColor() { SET_PAIR(m_rareInheritedData, hasVisitedLinkAutoCaretColor, true, visitedLinkCaretColor, Style::Color::currentColor()); }
 inline void RenderStyle::setHeight(Style::PreferredSize&& length) { SET_NESTED(m_nonInheritedData, boxData, m_height, WTFMove(length)); }
 inline void RenderStyle::setHyphenateLimitAfter(Style::HyphenateLimitEdge limit) { SET(m_rareInheritedData, hyphenateLimitAfter, limit); }
@@ -442,11 +442,11 @@ inline void RenderStyle::setMarkerStart(Style::SVGMarkerResource&& marker) { SET
 inline void RenderStyle::setMarkerMid(Style::SVGMarkerResource&& marker) { SET_NESTED(m_svgStyle, inheritedResourceData, markerMid, WTFMove(marker)); }
 inline void RenderStyle::setMarkerEnd(Style::SVGMarkerResource&& marker) { SET_NESTED(m_svgStyle, inheritedResourceData, markerEnd, WTFMove(marker)); }
 
-inline void RenderStyle::NonInheritedFlags::setHasPseudoStyles(PseudoIdSet pseudoIdSet)
+inline void RenderStyle::NonInheritedFlags::setHasPseudoStyles(OptionSet<PseudoId> pseudoIdSet)
 {
     ASSERT(pseudoIdSet);
-    ASSERT((pseudoIdSet.data() & PublicPseudoIdMask) == pseudoIdSet.data());
-    pseudoBits |= pseudoIdSet.data() >> 1; // Shift down as we do not store a bit for PseudoId::None.
+    ASSERT(pseudoIdSet.containsOnly(allPublicPseudoIds));
+    pseudoBits = pseudoIdSet.toRaw();
 }
 
 inline void RenderStyle::resetBorder()
@@ -517,6 +517,11 @@ inline void RenderStyle::setPseudoElementNameArgument(const AtomString& identifi
         || pseudoElementType() == PseudoId::Highlight
         || identifier.isNull());
     SET_NESTED(m_nonInheritedData, rareData, pseudoElementNameArgument, identifier);
+}
+
+inline void RenderStyle::setPseudoElementType(PseudoId pseudoElementType)
+{
+    m_nonInheritedFlags.pseudoElementTypeIndex = pseudoIdToIndex(pseudoElementType);
 }
 
 inline void RenderStyle::setGridTemplateColumns(Style::GridTemplateList&& list)

@@ -64,7 +64,6 @@ class LayoutSize;
 class LayoutUnit;
 class OutlineValue;
 class PositionArea;
-class PseudoIdSet;
 class RenderElement;
 class RenderStyle;
 class SVGRenderStyle;
@@ -503,8 +502,8 @@ public:
     StyleSelfAlignmentData resolvedJustifySelf(const RenderStyle* parentStyle, ItemPosition normalValueBehavior) const;
     StyleContentAlignmentData resolvedJustifyContent(const StyleContentAlignmentData& normalValueBehavior) const;
 
-    PseudoId pseudoElementType() const { return static_cast<PseudoId>(m_nonInheritedFlags.pseudoElementType); }
-    void setPseudoElementType(PseudoId pseudoElementType) { m_nonInheritedFlags.pseudoElementType = static_cast<unsigned>(pseudoElementType); }
+    PseudoId pseudoElementType() const;
+    void setPseudoElementType(PseudoId);
     const AtomString& pseudoElementNameArgument() const;
     void setPseudoElementNameArgument(const AtomString&);
 
@@ -572,7 +571,7 @@ public:
 
     inline bool hasAnyPublicPseudoStyles() const;
     inline bool hasPseudoStyle(PseudoId) const;
-    inline void setHasPseudoStyles(PseudoIdSet);
+    inline void setHasPseudoStyles(OptionSet<PseudoId>);
 
     inline bool hasDisplayAffectedByAnimations() const;
     inline void setHasDisplayAffectedByAnimations();
@@ -2515,7 +2514,7 @@ private:
 
         inline bool hasAnyPublicPseudoStyles() const;
         bool hasPseudoStyle(PseudoId) const;
-        void setHasPseudoStyles(PseudoIdSet);
+        void setHasPseudoStyles(OptionSet<PseudoId>);
 
 #if !LOG_DISABLED
         void dumpDifferences(TextStream&, const NonInheritedFlags&) const;
@@ -2541,7 +2540,7 @@ private:
         PREFERRED_TYPE(bool) unsigned firstChildState : 1;
         PREFERRED_TYPE(bool) unsigned lastChildState : 1;
         PREFERRED_TYPE(bool) unsigned isLink : 1;
-        PREFERRED_TYPE(PseudoId) unsigned pseudoElementType : PseudoElementTypeBits;
+        PREFERRED_TYPE(unsigned) unsigned pseudoElementTypeIndex : PseudoElementTypeBits;
         unsigned pseudoBits : PublicPseudoIDBits;
         PREFERRED_TYPE(Style::TextDecorationLine) unsigned textDecorationLine : TextDecorationLineBits; // Text decorations defined *only* by this element.
 

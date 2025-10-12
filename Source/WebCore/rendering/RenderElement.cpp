@@ -1793,7 +1793,7 @@ bool RenderElement::repaintForPausedImageAnimationsIfNeeded(const IntRect& visib
 
 const RenderStyle* RenderElement::getCachedPseudoStyle(const Style::PseudoElementIdentifier& pseudoElementIdentifier, const RenderStyle* parentStyle) const
 {
-    if (pseudoElementIdentifier.pseudoId < PseudoId::FirstInternalPseudoId && !style().hasPseudoStyle(pseudoElementIdentifier.pseudoId))
+    if (allPublicPseudoIds.contains(pseudoElementIdentifier.pseudoId) && !style().hasPseudoStyle(pseudoElementIdentifier.pseudoId))
         return nullptr;
 
     auto* cachedStyle = style().getCachedPseudoStyle(pseudoElementIdentifier);
@@ -1808,7 +1808,7 @@ const RenderStyle* RenderElement::getCachedPseudoStyle(const Style::PseudoElemen
 
 std::unique_ptr<RenderStyle> RenderElement::getUncachedPseudoStyle(const Style::PseudoElementRequest& pseudoElementRequest, const RenderStyle* parentStyle, const RenderStyle* ownStyle) const
 {
-    if (pseudoElementRequest.pseudoId() < PseudoId::FirstInternalPseudoId && !ownStyle && !style().hasPseudoStyle(pseudoElementRequest.pseudoId()))
+    if (allPublicPseudoIds.contains(pseudoElementRequest.pseudoId()) && !ownStyle && !style().hasPseudoStyle(pseudoElementRequest.pseudoId()))
         return nullptr;
 
     if (!parentStyle) {
