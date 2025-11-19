@@ -68,7 +68,11 @@ LineBox LineBoxBuilder::build(size_t lineIndex)
         auto blockLineLogicalTopLeft = InlineLayoutPoint { lineLayoutResult.lineGeometry.initialLogicalLeft, lineLayoutResult.lineGeometry.logicalTopLeft.y() };
         lineBox.setLogicalRect({ blockLineLogicalTopLeft, lineLayoutResult.lineGeometry.logicalWidth, marginBoxHeight });
         setVerticalPropertiesForInlineLevelBox(lineBox, lineBox.rootInlineBox());
-        lineBox.setHasContent(!!marginBoxHeight);
+        if (marginBoxHeight) {
+            lineBox.setHasContent(true);
+            lineBox.rootInlineBox().setHasContent();
+            lineBox.rootInlineBox().setLogicalHeight(marginBoxHeight);
+        }
     } else {
         constructInlineLevelBoxes(lineBox);
         if (lineBox.hasContent()) {
