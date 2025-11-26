@@ -25,7 +25,6 @@
 #include "config.h"
 #include "RenderInline.h"
 
-#include "BorderPainter.h"
 #include "Chrome.h"
 #include "FloatQuad.h"
 #include "FrameSelection.h"
@@ -36,6 +35,7 @@
 #include "InlineIteratorLineBox.h"
 #include "LayoutIntegrationLineLayout.h"
 #include "LegacyInlineTextBox.h"
+#include "OutlinePainter.h"
 #include "RenderBlock.h"
 #include "RenderBoxInlines.h"
 #include "RenderChildIterator.h"
@@ -974,7 +974,7 @@ void RenderInline::paintOutline(PaintInfo& paintInfo, const LayoutPoint& paintOf
 
         rects.append(LayoutRect { enclosingVisualRect });
     }
-    BorderPainter { *this, paintInfo }.paintOutline(paintOffset, rects);
+    OutlinePainter { *this, paintInfo }.paintOutline(paintOffset, rects);
 }
 
 bool isEmptyInline(const RenderInline& renderer)
