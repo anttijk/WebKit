@@ -1671,7 +1671,7 @@ bool DocumentLoader::isLoadingInAPISense() const
         if (document->hasActiveParser())
             return true;
         RefPtr scriptableParser = document->scriptableDocumentParser();
-        if (scriptableParser && scriptableParser->hasScriptsWaitingForStylesheets())
+        if (scriptableParser && scriptableParser->isWaitingForStylesheets())
             return true;
     }
     return protectedFrameLoader()->subframeIsLoading();
