@@ -1647,22 +1647,23 @@ static FunctionType constructFragments(const CSSSelector& rootSelector, Selector
     return functionType;
 }
 
-static inline bool attributeNameTestingRequiresNamespaceRegister(const CSSSelector& attributeSelector)
+static inline unsigned extraRegistersForAttributeNameTesting(const CSSSelector& attributeSelector)
 {
-    return attributeSelector.attribute().prefix() != starAtom() && !attributeSelector.attribute().namespaceURI().isNull();
+    return attributeSelector.attribute().prefix() == starAtom() || attributeSelector.attribute().namespaceURI().isNull() ? 0 : 1;
 }
 
-static inline bool attributeValueTestingRequiresExtraRegister(const AttributeMatchingInfo& attributeInfo)
+static inline unsigned extraRegistersForAttributeValueTesting(const AttributeMatchingInfo& attributeInfo)
 {
     switch (attributeInfo.attributeCaseSensitivity()) {
     case AttributeCaseSensitivity::CaseSensitive:
-        return false;
+        return 0;
     case AttributeCaseSensitivity::HTMLLegacyCaseInsensitive:
-        return true;
+        return attributeInfo.selector().match() == CSSSelector::Match::Exact ? 2 : 1;
     case AttributeCaseSensitivity::CaseInsensitive:
-        return attributeInfo.selector().match() == CSSSelector::Match::Exact;
+        return attributeInfo.selector().match() == CSSSelector::Match::Exact ? 2 : 0;
     }
-    return true;
+    ASSERT_NOT_REACHED();
+    return 1;
 }
 
 // Element + ElementData + a pointer to values + an index on that pointer + the value we expect;
@@ -1689,9 +1690,8 @@ static unsigned minimumRegisterRequirements(const SelectorFragment& selectorFrag
 
         const AttributeMatchingInfo& attributeInfo = attributes[attributeIndex];
         const CSSSelector& attributeSelector = attributeInfo.selector();
-        if (attributeNameTestingRequiresNamespaceRegister(attributeSelector)
-            || attributeValueTestingRequiresExtraRegister(attributeInfo))
-            attributeMinimum += 1;
+
+        attributeMinimum += std::max(extraRegistersForAttributeNameTesting(attributeSelector), extraRegistersForAttributeValueTesting(attributeInfo));
 
         minimum = std::max(minimum, attributeMinimum);
     }
@@ -3624,43 +3624,69 @@ void SelectorCodeGenerator::generateElementAttributeValueExactMatching(Assembler
     LocalRegisterWithPreference expectedValueRegister(m_registerAllocator, JSC::GPRInfo::argumentGPR1);
     m_assembler.move(Assembler::TrustedImmPtr(expectedValue.impl()), expectedValueRegister);
 
-    switch (valueCaseSensitivity) {
-    case AttributeCaseSensitivity::CaseSensitive: {
+    if (valueCaseSensitivity == AttributeCaseSensitivity::CaseSensitive) {
         failureCases.append(m_assembler.branchPtr(Assembler::NotEqual, Assembler::Address(currentAttributeAddress, Attribute::valueMemoryOffset()), expectedValueRegister));
-        break;
+        return;
     }
-    case AttributeCaseSensitivity::HTMLLegacyCaseInsensitive: {
-        Assembler::Jump skipCaseInsensitiveComparison = m_assembler.branchPtr(Assembler::Equal, Assembler::Address(currentAttributeAddress, Attribute::valueMemoryOffset()), expectedValueRegister);
 
-        // If the element is an HTML element, in a HTML dcoument (not including XHTML), value matching is case insensitive.
+    Assembler::JumpList successCases;
+
+    auto pointersEqual = m_assembler.branchPtr(Assembler::Equal, Assembler::Address(currentAttributeAddress, Attribute::valueMemoryOffset()), expectedValueRegister);
+    successCases.append(pointersEqual);
+
+    if (valueCaseSensitivity == AttributeCaseSensitivity::HTMLLegacyCaseInsensitive) {
+        // If the element is an HTML element, in a HTML document (not including XHTML), value matching is case insensitive.
         // Taking the contrapositive, if we find the element is not HTML or is not in a HTML document, the condition above
-        // sould be sufficient and we can fail early.
+        // should be sufficient and we can fail early.
         generateElementAndDocumentIsHTML(failureCases);
-
-        LocalRegister valueStringImpl(m_registerAllocator);
-        m_assembler.loadPtr(Assembler::Address(currentAttributeAddress, Attribute::valueMemoryOffset()), valueStringImpl);
-
-        FunctionCall functionCall(m_assembler, m_registerAllocator, m_stackAllocator, m_functionCalls);
-        functionCall.setFunctionAddress(operationEqualIgnoringASCIICaseNonNull);
-        functionCall.setTwoArguments(valueStringImpl, expectedValueRegister);
-        failureCases.append(functionCall.callAndBranchOnBooleanReturnValue(Assembler::Zero));
-
-        skipCaseInsensitiveComparison.link(&m_assembler);
-        break;
     }
-    case AttributeCaseSensitivity::CaseInsensitive: {
-        LocalRegister valueStringImpl(m_registerAllocator);
-        m_assembler.loadPtr(Assembler::Address(currentAttributeAddress, Attribute::valueMemoryOffset()), valueStringImpl);
 
-        Assembler::Jump skipCaseInsensitiveComparison = m_assembler.branchPtr(Assembler::Equal, valueStringImpl, expectedValueRegister);
-        FunctionCall functionCall(m_assembler, m_registerAllocator, m_stackAllocator, m_functionCalls);
-        functionCall.setFunctionAddress(operationEqualIgnoringASCIICaseNonNull);
-        functionCall.setTwoArguments(valueStringImpl, expectedValueRegister);
-        failureCases.append(functionCall.callAndBranchOnBooleanReturnValue(Assembler::Zero));
-        skipCaseInsensitiveComparison.link(&m_assembler);
-        break;
+    LocalRegister scratchRegister(m_registerAllocator);
+    // scratchRegister = StringImpl;
+    m_assembler.loadPtr(Assembler::Address(currentAttributeAddress, Attribute::valueMemoryOffset()), scratchRegister);
+
+    // Inline check for lengths being inequal.
+    auto lengthsInequal = m_assembler.branch32(Assembler::NotEqual, Assembler::Address(scratchRegister, StringImpl::lengthMemoryOffset()), Assembler::TrustedImm32(expectedValue.length()));
+    failureCases.append(lengthsInequal);
+
+    // Inline case-insensitive comparison for short 8-bit strings.
+    // Normalizes ASCII alpha characters to lowercase before comparing.
+    constexpr unsigned maxInlineComparisonLength = 16;
+    if (expectedValue.is8Bit() && expectedValue.length() <= maxInlineComparisonLength) {
+        auto valueNot8Bit = m_assembler.branchTest32(Assembler::Zero, Assembler::Address(scratchRegister, StringImpl::flagsOffset()), Assembler::TrustedImm32(StringImpl::flagIs8Bit()));
+
+        auto expectedData = expectedValue.impl()->span8();
+
+        // scratchRegister = StringImpl::data()
+        m_assembler.loadPtr(Assembler::Address(scratchRegister, StringImpl::dataOffset()), scratchRegister);
+
+        LocalRegister characterRegister(m_registerAllocator);
+
+        // Compare each character with the expected value (unrolled loop).
+        for (unsigned i = 0; i < expectedData.size(); ++i) {
+            auto expectedCharacter = expectedData[i];
+            m_assembler.load8(Assembler::Address(scratchRegister, i), characterRegister);
+            if (isASCIIAlpha(expectedCharacter)) {
+                m_assembler.or32(Assembler::TrustedImm32(0x20), characterRegister);
+                failureCases.append(m_assembler.branch32(Assembler::NotEqual, characterRegister, Assembler::TrustedImm32(toASCIILower(expectedCharacter))));
+                continue;
+            }
+            failureCases.append(m_assembler.branch32(Assembler::NotEqual, characterRegister, Assembler::TrustedImm32(expectedCharacter)));
+        }
+
+        // All characters matched exactly.
+        successCases.append(m_assembler.jump());
+
+        valueNot8Bit.link(&m_assembler);
     }
-    }
+
+    // Fall back to calling comparison function for case-insensitive matching.
+    FunctionCall functionCall(m_assembler, m_registerAllocator, m_stackAllocator, m_functionCalls);
+    functionCall.setFunctionAddress(operationEqualIgnoringASCIICaseNonNull);
+    functionCall.setTwoArguments(scratchRegister, expectedValueRegister);
+    failureCases.append(functionCall.callAndBranchOnBooleanReturnValue(Assembler::Zero));
+
+    successCases.link(&m_assembler);
 }
 
 void SelectorCodeGenerator::generateElementAttributeFunctionCallValueMatching(Assembler::JumpList& failureCases, Assembler::RegisterID currentAttributeAddress, const AtomString& expectedValue, AttributeCaseSensitivity valueCaseSensitivity, CodePtr<JSC::OperationPtrTag> caseSensitiveTest, CodePtr<JSC::OperationPtrTag> caseInsensitiveTest)
