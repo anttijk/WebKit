@@ -1062,7 +1062,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     crypto/parameters/CryptoAlgorithmRsaPssParamsInit.h
     crypto/parameters/CryptoAlgorithmX25519ParamsInit.h
 
-    css/CSSAttrValue.h
+    css/CSSAttrFunctionValue.h
     css/CSSColorValue.h
     css/CSSComputedStyleDeclaration.h
     css/CSSConditionRule.h

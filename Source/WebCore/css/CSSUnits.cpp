@@ -110,7 +110,6 @@ CSSUnitCategory unitCategory(CSSUnitType type)
     case CSSUnitType::CSS_CQB:
     case CSSUnitType::CSS_CQMIN:
     case CSSUnitType::CSS_CQMAX:
-    case CSSUnitType::CSS_ATTR:
     case CSSUnitType::CSS_CALC:
     case CSSUnitType::CSS_CALC_PERCENTAGE_WITH_ANGLE:
     case CSSUnitType::CSS_CALC_PERCENTAGE_WITH_LENGTH:
@@ -206,7 +205,6 @@ TextStream& operator<<(TextStream& ts, CSSUnitType unitType)
     case CSSUnitType::CSS_STRING: ts << "string"_s; break;
     case CSSUnitType::CSS_IDENT: ts << "ident"_s; break;
     case CSSUnitType::CustomIdent: ts << "custom-ident"_s; break;
-    case CSSUnitType::CSS_ATTR: ts << "attr"_s; break;
     case CSSUnitType::CSS_VW: ts << "vw"_s; break;
     case CSSUnitType::CSS_VH: ts << "vh"_s; break;
     case CSSUnitType::CSS_VMIN: ts << "vmin"_s; break;
@@ -369,7 +367,6 @@ bool conversionToCanonicalUnitRequiresConversionData(CSSUnitType unit)
     case CSSUnitType::CSS_DPI:
     case CSSUnitType::CSS_DPCM:
     case CSSUnitType::CSS_FR:
-    case CSSUnitType::CSS_ATTR:
     case CSSUnitType::CSS_CALC:
     case CSSUnitType::CSS_CALC_PERCENTAGE_WITH_ANGLE:
     case CSSUnitType::CSS_CALC_PERCENTAGE_WITH_LENGTH:

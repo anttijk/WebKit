@@ -77,7 +77,6 @@ enum class CSSUnitType : uint8_t {
     CSS_DIMENSION,
     CSS_STRING,
     CSS_IDENT,
-    CSS_ATTR,
 
     CSS_VW,
     CSS_VH,

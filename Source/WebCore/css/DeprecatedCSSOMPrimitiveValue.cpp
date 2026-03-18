@@ -58,7 +58,6 @@ unsigned short DeprecatedCSSOMPrimitiveValue::primitiveType() const
         return CSS_UNKNOWN;
 
     switch (primitiveValue->primitiveType()) {
-    case CSSUnitType::CSS_ATTR:                         return CSS_ATTR;
     case CSSUnitType::CSS_CM:                           return CSS_CM;
     case CSSUnitType::CSS_DEG:                          return CSS_DEG;
     case CSSUnitType::CSS_DIMENSION:                    return CSS_DIMENSION;
@@ -125,7 +124,6 @@ ExceptionOr<float> DeprecatedCSSOMPrimitiveValue::getFloatValue(unsigned short u
 ExceptionOr<String> DeprecatedCSSOMPrimitiveValue::getStringValue() const
 {
     switch (primitiveType()) {
-    case CSS_ATTR:      return downcast<CSSPrimitiveValue>(m_value.get()).stringValue();
     case CSS_IDENT:     return downcast<CSSPrimitiveValue>(m_value.get()).stringValue();
     case CSS_STRING:    return downcast<CSSPrimitiveValue>(m_value.get()).stringValue();
     case CSS_URI:       return downcast<CSSURLValue>(m_value.get()).stringValue();

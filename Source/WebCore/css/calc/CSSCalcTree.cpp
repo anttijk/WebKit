@@ -157,7 +157,6 @@ Child makeNumeric(double value, CSSUnitType unit)
         return makeChild(NonCanonicalDimension { .value = value, .unit = unit });
 
     // Non-numeric types are not supported.
-    case CSSUnitType::CSS_ATTR:
     case CSSUnitType::CSS_CALC:
     case CSSUnitType::CSS_CALC_PERCENTAGE_WITH_ANGLE:
     case CSSUnitType::CSS_CALC_PERCENTAGE_WITH_LENGTH:

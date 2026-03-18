@@ -26,7 +26,7 @@
 #include "config.h"
 #include "CSSPropertyParserConsumer+Attr.h"
 
-#include "CSSAttrValue.h"
+#include "CSSAttrFunctionValue.h"
 #include "CSSParserContext.h"
 #include "CSSParserTokenRange.h"
 #include "CSSPrimitiveValue.h"
@@ -72,10 +72,7 @@ RefPtr<CSSValue> consumeAttr(CSSParserTokenRange args, CSS::PropertyParserState&
     if (!args.atEnd())
         return nullptr;
 
-    auto attr = CSSAttrValue::create(WTF::move(attrName), WTF::move(fallback));
-    // FIXME: Consider moving to a CSSFunctionValue with a custom-ident rather than a special CSS_ATTR primitive value.
-
-    return CSSPrimitiveValue::create(WTF::move(attr));
+    return CSSAttrFunctionValue::create(CSS::AttrFunction { String { attrName.string() }, WTF::move(fallback) });
 }
 
 } // namespace CSSPropertyParserHelpers

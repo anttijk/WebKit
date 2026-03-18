@@ -24,40 +24,64 @@
  */
 
 #include "config.h"
-#include "CSSAttrValue.h"
+#include "CSSAttrFunctionValue.h"
 
-#include <wtf/text/MakeString.h>
 #include "CSSPrimitiveValue.h"
+#include <wtf/text/MakeString.h>
 
 namespace WebCore {
 
-Ref<CSSAttrValue> CSSAttrValue::create(String attributeName, RefPtr<CSSValue>&& fallback)
-{
-    return adoptRef(*new CSSAttrValue(WTF::move(attributeName), WTF::move(fallback)));
-}
+// MARK: - CSS::AttrFunction
 
-bool CSSAttrValue::equals(const CSSAttrValue& other) const
-{
-    RefPtr fallback = dynamicDowncast<CSSPrimitiveValue>(m_fallback);
-    RefPtr otherFallback = dynamicDowncast<CSSPrimitiveValue>(other.m_fallback);
+namespace CSS {
 
-    if (fallback && otherFallback)
-        return m_attributeName == other.m_attributeName && fallback->stringValue() == otherFallback->stringValue();
-    if (fallback || otherFallback)
+bool AttrFunction::operator==(const AttrFunction& other) const
+{
+    RefPtr fallbackValue = dynamicDowncast<CSSPrimitiveValue>(fallback);
+    RefPtr otherFallback = dynamicDowncast<CSSPrimitiveValue>(other.fallback);
+
+    if (fallbackValue && otherFallback)
+        return attributeName == other.attributeName && fallbackValue->stringValue() == otherFallback->stringValue();
+    if (fallbackValue || otherFallback)
         return false;
-    return m_attributeName == other.m_attributeName;
+    return attributeName == other.attributeName;
 }
 
-String CSSAttrValue::customCSSText(const CSS::SerializationContext& context) const
+String AttrFunction::cssText(const SerializationContext& context) const
 {
-    RefPtr fallback = dynamicDowncast<CSSPrimitiveValue>(m_fallback);
+    RefPtr fallbackValue = dynamicDowncast<CSSPrimitiveValue>(fallback);
     return makeString(
         "attr("_s,
-        m_attributeName.impl(),
-        fallback && !fallback->stringValue().isEmpty() ? ", "_s : ""_s,
-        fallback && !fallback->stringValue().isEmpty() ? fallback->cssText(context) : ""_s,
+        attributeName.impl(),
+        fallbackValue && !fallbackValue->stringValue().isEmpty() ? ", "_s : ""_s,
+        fallbackValue && !fallbackValue->stringValue().isEmpty() ? fallbackValue->cssText(context) : ""_s,
         ')'
     );
+}
+
+} // namespace CSS
+
+// MARK: - CSSAttrFunctionValue
+
+Ref<CSSAttrFunctionValue> CSSAttrFunctionValue::create(CSS::AttrFunction attr)
+{
+    return adoptRef(*new CSSAttrFunctionValue(WTF::move(attr)));
+}
+
+CSSAttrFunctionValue::CSSAttrFunctionValue(CSS::AttrFunction attr)
+    : CSSValue(ClassType::AttrFunction)
+    , m_attr(WTF::move(attr))
+{
+}
+
+String CSSAttrFunctionValue::customCSSText(const CSS::SerializationContext& context) const
+{
+    return m_attr.cssText(context);
+}
+
+bool CSSAttrFunctionValue::equals(const CSSAttrFunctionValue& other) const
+{
+    return m_attr == other.m_attr;
 }
 
 } // namespace WebCore

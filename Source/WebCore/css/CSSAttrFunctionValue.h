@@ -26,33 +26,39 @@
 #pragma once
 
 #include <WebCore/CSSValue.h>
-
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {
 
-class Element;
+namespace CSS {
 
-class CSSAttrValue final : public CSSValue {
+struct SerializationContext;
+
+struct AttrFunction {
+    String attributeName;
+    RefPtr<CSSValue> fallback;
+
+    bool operator==(const AttrFunction&) const;
+    String cssText(const SerializationContext&) const;
+};
+
+} // namespace CSS
+
+class CSSAttrFunctionValue final : public CSSValue {
 public:
-    static Ref<CSSAttrValue> create(String attributeName, RefPtr<CSSValue>&& fallback = nullptr);
-    const String attributeName() const { return m_attributeName; }
-    const CSSValue* fallback() const { return m_fallback.get(); }
-    bool equals(const CSSAttrValue& other) const;
+    static Ref<CSSAttrFunctionValue> create(CSS::AttrFunction);
+
+    const CSS::AttrFunction& attrFunction() const LIFETIME_BOUND { return m_attr; }
+
     String customCSSText(const CSS::SerializationContext&) const;
+    bool equals(const CSSAttrFunctionValue&) const;
 
 private:
-    explicit CSSAttrValue(String&& attributeName, RefPtr<CSSValue>&& fallback)
-        : CSSValue(ClassType::Attr)
-        , m_attributeName(WTF::move(attributeName))
-        , m_fallback(WTF::move(fallback))
-    {
-    }
+    CSSAttrFunctionValue(CSS::AttrFunction);
 
-    String m_attributeName;
-    const RefPtr<CSSValue> m_fallback;
+    CSS::AttrFunction m_attr;
 };
 
 } // namespace WebCore
 
-SPECIALIZE_TYPE_TRAITS_CSS_VALUE(CSSAttrValue, isAttrValue())
+SPECIALIZE_TYPE_TRAITS_CSS_VALUE(CSSAttrFunctionValue, isAttrFunctionValue())

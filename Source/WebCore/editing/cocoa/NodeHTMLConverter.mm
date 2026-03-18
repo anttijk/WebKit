@@ -478,7 +478,7 @@ static bool stringFromCSSValue(CSSValue& value, String& result)
     if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
         // FIXME: Use isStringType(CSSUnitType)?
         auto primitiveType = primitiveValue->primitiveType();
-        if (primitiveType == CSSUnitType::CSS_STRING || primitiveType == CSSUnitType::CSS_IDENT || primitiveType == CSSUnitType::CSS_ATTR) {
+        if (primitiveType == CSSUnitType::CSS_STRING || primitiveType == CSSUnitType::CSS_IDENT) {
             auto stringValue = value.cssText(CSS::defaultSerializationContext());
             if (stringValue.length()) {
                 result = stringValue;

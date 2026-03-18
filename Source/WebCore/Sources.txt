@@ -872,7 +872,7 @@ crypto/keys/CryptoKeyRSA.cpp
 crypto/keys/CryptoKeyRSAComponents.cpp
 crypto/keys/CryptoKeyRaw.cpp
 css/CSSAppleColorFilterValue.cpp
-css/CSSAttrValue.cpp
+css/CSSAttrFunctionValue.cpp
 css/CSSBackgroundRepeatValue.cpp
 css/CSSBasicShapeValue.cpp
 css/CSSBorderImage.cpp

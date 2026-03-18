@@ -26,7 +26,7 @@
 #include "config.h"
 #include "StyleContent.h"
 
-#include "CSSAttrValue.h"
+#include "CSSAttrFunctionValue.h"
 #include "CSSCounterValue.h"
 #include "CSSPrimitiveValue.h"
 #include "CSSValueList.h"
@@ -68,13 +68,13 @@ auto CSSValueConversion<Content>::operator()(BuilderState& state, const CSSValue
         return CSS::Keyword::Normal { };
 
     // FIXME: Replace with support for CSS Values 5 attr() substitution function.
-    auto processAttrContent = [&](const CSSAttrValue& value) -> AtomString {
+    auto processAttrContent = [&](const CSS::AttrFunction& value) -> AtomString {
         if (!state.style().pseudoElementType())
             state.style().setHasAttrContent();
         else
             const_cast<ComputedStyle&>(state.parentStyle()).setHasAttrContent();
 
-        QualifiedName attr(nullAtom(), value.attributeName().impl(), nullAtom());
+        QualifiedName attr(nullAtom(), value.attributeName.impl(), nullAtom());
         RefPtr element = state.element();
         const AtomString& attributeValue = element ? element->getAttribute(attr) : nullAtom();
 
@@ -82,7 +82,7 @@ auto CSSValueConversion<Content>::operator()(BuilderState& state, const CSSValue
         state.registerContentAttribute(attr.localName());
 
         if (attributeValue.isNull()) {
-            RefPtr fallback = dynamicDowncast<CSSPrimitiveValue>(value.fallback());
+            RefPtr fallback = dynamicDowncast<CSSPrimitiveValue>(value.fallback);
             return fallback && fallback->isString() ? fallback->stringValue().impl() : emptyAtom();
         }
         return attributeValue.impl();
@@ -113,12 +113,13 @@ auto CSSValueConversion<Content>::operator()(BuilderState& state, const CSSValue
                 }
                 if (primitive->isString())
                     return Content::Text { primitive->stringValue() };
-                if (RefPtr attr = primitive->cssAttrValue())
-                    return Content::Text { processAttrContent(*attr) };
 
                 state.setCurrentPropertyInvalidAtComputedValueTime();
                 return Content::Text { emptyString() };
             }
+
+            if (auto* attrValue = dynamicDowncast<CSSAttrFunctionValue>(item))
+                return Content::Text { processAttrContent(attrValue->attrFunction()) };
 
             if (RefPtr counter = dynamicDowncast<CSSCounterValue>(item))
                 return Content::Counter { counter->identifier(), counter->separator(), toStyleFromCSSValue<CounterStyle>(state, counter->counterStyle()) };
@@ -132,16 +133,17 @@ auto CSSValueConversion<Content>::operator()(BuilderState& state, const CSSValue
         if (!contentListAltTextPair)
             return { };
 
-        auto altTextList = requiredListDowncast<CSSValueList, CSSPrimitiveValue>(state, contentListAltTextPair->second());
+        RefPtr altTextList = requiredDowncast<CSSValueList>(state, contentListAltTextPair->second());
         if (!altTextList)
             return { };
 
         StringBuilder altTextBuilder;
-        for (Ref item : *altTextList) {
-            if (item->isString())
-                altTextBuilder.append(item->stringValue());
-            else if (RefPtr attr = item->cssAttrValue())
-                altTextBuilder.append(processAttrContent(*attr));
+        for (auto& item : *altTextList) {
+            if (RefPtr primitive = dynamicDowncast<CSSPrimitiveValue>(item)) {
+                if (primitive->isString())
+                    altTextBuilder.append(primitive->stringValue());
+            } else if (RefPtr attrValue = dynamicDowncast<CSSAttrFunctionValue>(item))
+                altTextBuilder.append(processAttrContent(attrValue->attrFunction()));
         }
         return altTextBuilder.toString();
     };

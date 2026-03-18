@@ -30,7 +30,7 @@
 #include "CSSValue.h"
 
 #include "CSSAppleColorFilterValue.h"
-#include "CSSAttrValue.h"
+#include "CSSAttrFunctionValue.h"
 #include "CSSBackgroundRepeatValue.h"
 #include "CSSBasicShapeValue.h"
 #include "CSSBorderImageSliceValue.h"
@@ -111,8 +111,8 @@ template<typename Visitor> constexpr decltype(auto) CSSValue::visitDerived(Visit
     switch (m_classType) {
     case AppleColorFilter:
         return std::invoke(std::forward<Visitor>(visitor), uncheckedDowncast<CSSAppleColorFilterValue>(*this));
-    case Attr:
-        return std::invoke(std::forward<Visitor>(visitor), uncheckedDowncast<CSSAttrValue>(*this));
+    case AttrFunction:
+        return std::invoke(std::forward<Visitor>(visitor), uncheckedDowncast<CSSAttrFunctionValue>(*this));
     case BackgroundRepeat:
         return std::invoke(std::forward<Visitor>(visitor), uncheckedDowncast<CSSBackgroundRepeatValue>(*this));
     case BasicShape:
