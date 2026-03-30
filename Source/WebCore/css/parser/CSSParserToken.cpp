@@ -653,8 +653,9 @@ void CSSParserToken::serialize(StringBuilder& builder, const CSSParserToken* nex
         appendCommentIfNeeded({ IdentToken, FunctionToken, UrlToken, BadUrlToken, NumberToken, PercentageToken, DimensionToken, CDCToken }, '-');
         break;
     case UrlToken:
+        // https://drafts.csswg.org/cssom-1/#serialize-a-url
         builder.append("url("_s);
-        serializeIdentifier(value().toString(), builder);
+        serializeString(value().toString(), builder);
         builder.append(')');
         break;
     case DelimiterToken:
