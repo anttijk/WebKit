@@ -4126,6 +4126,7 @@
                 "computed-style-storage-container": "struct",
                 "computed-style-storage-kind": "enum",
                 "computed-style-type": "Clear",
+                "used-style": "custom",
                 "parser-grammar": "<<values>>"
             },
             "specification": {
@@ -4817,6 +4818,7 @@
                 "computed-style-storage-container": "struct",
                 "computed-style-storage-kind": "enum",
                 "computed-style-type": "Float",
+                "used-style": "custom",
                 "parser-grammar": "<<values>>"
             },
             "specification": {
@@ -5604,6 +5606,7 @@
                 "computed-style-storage-container": "physical-group",
                 "computed-style-storage-kind": "reference",
                 "computed-style-type": "Style::MarginEdge",
+                "used-style": "evaluate-zoomed-or-auto",
                 "parser-grammar": "<length-percentage anchor-size=allowed> | auto"
             },
             "specification": {
@@ -5687,6 +5690,7 @@
                 "computed-style-storage-container": "physical-group",
                 "computed-style-storage-kind": "reference",
                 "computed-style-type": "Style::MarginEdge",
+                "used-style": "evaluate-zoomed-or-auto",
                 "parser-grammar": "<length-percentage anchor-size=allowed> | auto"
             },
             "specification": {
@@ -5711,6 +5715,7 @@
                 "computed-style-storage-container": "physical-group",
                 "computed-style-storage-kind": "reference",
                 "computed-style-type": "Style::MarginEdge",
+                "used-style": "evaluate-zoomed-or-auto",
                 "parser-grammar": "<length-percentage anchor-size=allowed> | auto"
             },
             "specification": {
@@ -5735,6 +5740,7 @@
                 "computed-style-storage-container": "physical-group",
                 "computed-style-storage-kind": "reference",
                 "computed-style-type": "Style::MarginEdge",
+                "used-style": "evaluate-zoomed-or-auto",
                 "parser-grammar": "<length-percentage anchor-size=allowed> | auto"
             },
             "specification": {

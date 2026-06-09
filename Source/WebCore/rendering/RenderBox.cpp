@@ -70,6 +70,7 @@
 #include "RenderBoxInlines.h"
 #include "RenderChildIterator.h"
 #include "RenderDeprecatedFlexibleBox.h"
+#include "RenderElementInlines.h"
 #include "RenderElementStyleInlines.h"
 #include "RenderFlexibleBox.h"
 #include "RenderFragmentContainer.h"
@@ -2819,11 +2820,10 @@ void RenderBox::computeLogicalWidth(LogicalExtentComputedValues& computedValues)
     }();
 
     auto containerLogicalWidth = std::max(0_lu, containingBlockLogicalWidthForContent());
-    auto& styleToUse = style();
     if (isInline() && is<RenderReplaced>(*this)) {
         // just calculate margins
-        computedValues.margins.start = Style::evaluateMinimum<LayoutUnit>(styleToUse.marginStart(), containerLogicalWidth, styleToUse.usedZoomForLength());
-        computedValues.margins.end = Style::evaluateMinimum<LayoutUnit>(styleToUse.marginEnd(), containerLogicalWidth, styleToUse.usedZoomForLength());
+        computedValues.margins.start = usedStyle().marginStart(containerLogicalWidth).value_or(0_lu);
+        computedValues.margins.end = usedStyle().marginEnd(containerLogicalWidth).value_or(0_lu);
         if (treatAsReplaced) {
             auto evaluatedWidth = downcast<RenderReplaced>(*this).computeReplacedLogicalWidth();
             auto totalWidth = evaluatedWidth + borderAndPaddingLogicalWidth();
@@ -2857,10 +2857,10 @@ void RenderBox::computeLogicalWidth(LogicalExtentComputedValues& computedValues)
     // Margin calculations.
     if (hasPerpendicularContainingBlock || isFloating() || isInline()) {
         computedValues.margins.start = computeOrTrimInlineMargin(containingBlock, Style::MarginTrimSide::BlockStart, [&] {
-            return Style::evaluateMinimum<LayoutUnit>(styleToUse.marginStart(), containerLogicalWidth, styleToUse.usedZoomForLength());
+            return usedStyle().marginStart(containerLogicalWidth).value_or(0_lu);
         });
         computedValues.margins.end = computeOrTrimInlineMargin(containingBlock, Style::MarginTrimSide::BlockEnd, [&] {
-            return Style::evaluateMinimum<LayoutUnit>(styleToUse.marginEnd(), containerLogicalWidth, styleToUse.usedZoomForLength());
+            return usedStyle().marginEnd(containerLogicalWidth).value_or(0_lu);
         });
     } else {
         auto containerLogicalWidthForAutoMargins = containerLogicalWidth;
@@ -3612,11 +3612,8 @@ LayoutUnit RenderBox::blockAxisMarginForStretch() const
     ASSERT(containingBlock());
     CheckedRef containingBlock = *this->containingBlock();
 
-    auto availableSpace = containingBlockLogicalWidthForContent();
-    auto marginLogicalBefore = Style::evaluateMinimum<LayoutUnit>(
-        style().marginBefore(), availableSpace, style().usedZoomForLength());
-    auto marginLogicalAfter = Style::evaluateMinimum<LayoutUnit>(
-        style().marginAfter(), availableSpace, style().usedZoomForLength());
+    auto marginLogicalBefore = usedStyle().marginBefore(ReferenceSize::ContainingBlockWidth).value_or(0_lu);
+    auto marginLogicalAfter = usedStyle().marginAfter(ReferenceSize::ContainingBlockWidth).value_or(0_lu);
 
     // When the child is non-orthogonal, its block axis maps to the parent's block axis.
     // Adjust margins per CSS Sizing 4 §6.1.
@@ -4137,8 +4134,8 @@ void RenderBox::computeBlockDirectionMargins(const RenderBlock& containingBlock,
 
         auto availableSpace = containingBlockLogicalWidthForContent();
         return marginSideInBlockDirection == Style::MarginTrimSide::BlockStart
-            ? Style::evaluateMinimum<LayoutUnit>(style().marginBefore(containingBlock.writingMode()), availableSpace, style().usedZoomForLength())
-            : Style::evaluateMinimum<LayoutUnit>(style().marginAfter(containingBlock.writingMode()), availableSpace, style().usedZoomForLength());
+            ? usedStyle().marginBefore(containingBlock.writingMode(), availableSpace).value_or(0_lu)
+            : usedStyle().marginAfter(containingBlock.writingMode(), availableSpace).value_or(0_lu);
     };
 
     marginBefore = constrainBlockMarginInAvailableSpaceOrTrim(Style::MarginTrimSide::BlockStart);

@@ -29,6 +29,7 @@
 #include "PaintInfo.h"
 #include "RenderBoxInlines.h"
 #include "RenderBoxModelObjectInlines.h"
+#include "RenderElementInlines.h"
 #include "RenderScrollbar.h"
 #include "RenderScrollbarTheme.h"
 #include "RenderView.h"
@@ -117,8 +118,8 @@ void RenderScrollbarPart::computeScrollbarWidth()
     setWidth(std::max(minWidth, std::min(maxWidth, width)));
     
     // Buttons and track pieces can all have margins along the axis of the scrollbar. 
-    m_marginBox.setLeft(Style::evaluateMinimum<LayoutUnit>(style().marginLeft(), 0_lu, style().usedZoomForLength()));
-    m_marginBox.setRight(Style::evaluateMinimum<LayoutUnit>(style().marginRight(), 0_lu, style().usedZoomForLength()));
+    m_marginBox.setLeft(usedStyle().marginLeft(ReferenceSize::Zero).value_or(0_lu));
+    m_marginBox.setRight(usedStyle().marginRight(ReferenceSize::Zero).value_or(0_lu));
 }
 
 void RenderScrollbarPart::computeScrollbarHeight()
@@ -132,8 +133,8 @@ void RenderScrollbarPart::computeScrollbarHeight()
     setHeight(std::max(minHeight, std::min(maxHeight, height)));
 
     // Buttons and track pieces can all have margins along the axis of the scrollbar. 
-    m_marginBox.setTop(Style::evaluateMinimum<LayoutUnit>(style().marginTop(), 0_lu, style().usedZoomForLength()));
-    m_marginBox.setBottom(Style::evaluateMinimum<LayoutUnit>(style().marginBottom(), 0_lu, style().usedZoomForLength()));
+    m_marginBox.setTop(usedStyle().marginTop(ReferenceSize::Zero).value_or(0_lu));
+    m_marginBox.setBottom(usedStyle().marginBottom(ReferenceSize::Zero).value_or(0_lu));
 }
 
 void RenderScrollbarPart::styleDidChange(Style::Difference diff, const Style::ComputedStyle* oldStyle)

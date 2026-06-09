@@ -1143,7 +1143,8 @@
                 "parser-grammar": "<number>",
                 "computed-style-storage-path": ["level1"],
                 "computed-style-storage-kind": "value",
-                "computed-style-type": "Style::Number<>"
+                "computed-style-type": "Style::Number<>",
+                "used-style": "forward"
             }
         },
         "test-render-style-storage-one-level-enum": {
