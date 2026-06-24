@@ -40,6 +40,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-color-valid.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-container-style-query.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-crash.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-css-wide-keywords.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-cycle.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-dynamic-marker-content-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-dynamic-marker-content.html
@@ -76,6 +77,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-pseudo-element-marker-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-pseudo-element-marker-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-pseudo-element-marker.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-pseudo-element-originating.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-pseudo-element-placeholder-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-pseudo-element-placeholder-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/attr-pseudo-element-placeholder.html
@@ -177,6 +179,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/calc-min-width-block-intrinsic-1-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/calc-min-width-block-intrinsic-1-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/calc-min-width-block-intrinsic-1.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/calc-mix-computed.tentative.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/calc-mix-invalid.tentative.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/calc-mix-serialize.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/calc-nesting-002.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/calc-nesting.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/calc-numbers.html
@@ -441,6 +446,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/random-in-media.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/random-invalid.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/random-serialize.tentative.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/random-unresolvable-argument.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/rcap-invalidation.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/rch-invalidation.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/rem-length-degrees-crash.html
@@ -470,6 +476,9 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/sin-cos-tan-computed.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/sin-cos-tan-invalid.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/sin-cos-tan-serialize.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/svg-attr-case-sensitivity-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/svg-attr-case-sensitivity-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-values/svg-attr-case-sensitivity.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/typed-arithmetic-different-categories-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/typed-arithmetic-inside-calc-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-values/typed-arithmetic-mixed-units-crash.html
