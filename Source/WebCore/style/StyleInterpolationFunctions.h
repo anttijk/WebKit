@@ -46,6 +46,7 @@
 #include "RenderBox.h"
 #include "ScopedName.h"
 #include "Settings.h"
+#include "StyleCalcSizeValue+Blending.h"
 #include "StyleComputedStyle+SettersInlines.h"
 #include "StyleFontPaletteInlines.h"
 #include "StyleDynamicRangeLimit.h"

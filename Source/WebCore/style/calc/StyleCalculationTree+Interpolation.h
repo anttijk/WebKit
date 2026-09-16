@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 Samuel Weinig <sam@webkit.org>
+ * Copyright (C) 2026 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,37 +24,25 @@
 
 #pragma once
 
-#include "StylePrimitiveNumericOrKeyword.h"
-#include "StylePrimitiveNumericTypes+Blending.h"
+#include <optional>
 
 namespace WebCore {
 namespace Style {
+namespace Calculation {
 
-// MARK: - Blending
+struct Child;
+struct Tree;
 
-// Base class shared with the SizeOrKeywordDerived types, which also accept calc-size().
-template<LengthPercentageOrKeywordDerived StyleType> struct NumericOrKeywordBlending {
-    using Numeric = typename StyleType::Numeric;
-    using Calc = typename StyleType::Calc;
+// Replaces every `size` keyword with `insertion`. Fails if the result would be too large.
+std::optional<Tree> substituteSize(const Tree&, const Child& insertion);
 
-    auto canBlend(const StyleType& a, const StyleType& b) -> bool
-    {
-        return a.hasSameType(b) || (WTF::holdsAlternative<Numeric>(a) && WTF::holdsAlternative<Numeric>(b));
-    }
-    auto requiresInterpolationForAccumulativeIteration(const StyleType& a, const StyleType& b) -> bool
-    {
-        return !a.hasSameType(b) || WTF::holdsAlternative<Calc>(a) || WTF::holdsAlternative<Calc>(b);
-    }
-    auto blend(const StyleType& a, const StyleType& b, const BlendingContext& context) -> StyleType
-    {
-        if (!WTF::holdsAlternative<Numeric>(a) || !WTF::holdsAlternative<Numeric>(b))
-            return context.progress < 0.5 ? a : b;
+// Replaces every percentage P with `size * P / 100`, to keep a percentage basis interpolating
+// linearly rather than quadratically.
+Tree dePercentify(const Tree&);
 
-        return Style::blend(get<Numeric>(a), get<Numeric>(b), context);
-    }
-};
+bool containsSize(const Tree&);
+bool containsPercentage(const Tree&);
 
-template<LengthPercentageOrKeywordDerived StyleType> struct Blending<StyleType> : NumericOrKeywordBlending<StyleType> { };
-
+} // namespace Calculation
 } // namespace Style
 } // namespace WebCore
