@@ -1285,12 +1285,12 @@ InlineIterator::InlineBoxIterator LineLayout::firstRootInlineBox() const
     return InlineIterator::inlineBoxFor(*m_inlineContent, m_inlineContent->displayContent().boxes.first());
 }
 
-InlineIterator::InlineBoxIterator LineLayout::lastRootInlineBox() const
+InlineIterator::BoxIterator LineLayout::lastBox() const
 {
     if (!m_inlineContent || !m_inlineContent->hasContentfulInFlowBox())
         return { };
 
-    return InlineIterator::inlineBoxFor(*m_inlineContent, m_inlineContent->displayContent().boxes.last());
+    return { InlineIterator::BoxModernPath { *m_inlineContent, m_inlineContent->displayContent().boxes.size() - 1 } };
 }
 
 InlineIterator::LineBoxIterator LineLayout::firstLineBox() const

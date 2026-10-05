@@ -1070,7 +1070,7 @@ SVGRootInlineBox* RenderSVGText::legacyRootBox() const
 bool RenderSVGText::isObjectBoundingBoxValid() const
 {
     // If we don't have any line boxes, then consider the bbox invalid.
-    return legacyRootBox();
+    return !!InlineIterator::firstRootInlineBoxFor(*this);
 }
 
 }
